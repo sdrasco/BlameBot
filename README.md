@@ -104,8 +104,8 @@ To adapt BlameBot to your specific needs, you might consider the following custo
 
 ### Reports
 
-- [Fun Report](fun_report.pdf): A visually engaging summary of spending habits.
-- [Dry Report](dry_report.pdf): A more detailed, technical breakdown of financial data.
+- [Fun Report](fun_report.pdf): A humorous report.
+- [Dry Report](dry_report.pdf): A humorless report.
 
 ## Compiling the LaTeX Report
 
