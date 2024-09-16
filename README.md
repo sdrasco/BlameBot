@@ -8,6 +8,7 @@ BlameBot is a Python-based tool designed to help families analyze their financia
 ## Features
 
 - **Multi-Source Data Integration**: Supports processing of financial statements from US credit cards (USD) and UK bank accounts (GBP).
+- **Amazon cross referencing**: Refines transaction descriptions by cross referencing Amazon order history.
 - **AI-Driven Clustering**: Uses FastText embeddings and clustering algorithms (HDBSCAN, DBSCAN, or KMeans) to categorize transactions.
 - **Smart Categorization**: Leverages GPT-4o to refine and clarify cluster names for intuitive spending categories.
 - **Visual Insights**: Generates a word cloud and bar chart to visualize spending patterns and monthly expenditures.
