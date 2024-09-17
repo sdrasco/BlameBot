@@ -12,19 +12,23 @@
             padding: 0;
             text-align: center;
         }
+
         header {
             padding: 50px 20px;
         }
+
         h1 {
             font-size: 48px;
             margin-bottom: 20px;
         }
+
         p {
             font-size: 20px;
             max-width: 800px;
             margin: 0 auto 30px;
             line-height: 1.6;
         }
+
         /* class for the smaller paragraph */
         .small-center {
             font-size: 16px; /* Smaller font size */
@@ -33,6 +37,7 @@
             margin: 10px auto 30px; /* Adjust margins as needed */
             line-height: 1.6;
         }
+
         a.button {
             display: inline-block;
             margin: 20px auto;
@@ -43,18 +48,37 @@
             font-size: 18px;
             border-radius: 5px;
         }
+
         a.button:hover {
             background-color: #0056b3;
         }
+
         footer {
             background-color: #f4f4f4;
             color: #333;
             padding: 20px 0;
             margin-top: 50px;
         }
+
         footer p {
             margin: 0;
             font-size: 16px;
+        }
+
+        /* Media query for smaller screens */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 36px; /* Reduce header size on small screens */
+            }
+
+            p, .small-center {
+                font-size: 16px; /* Adjust paragraph font size */
+            }
+
+            a.button {
+                padding: 10px 20px; /* Reduce padding */
+                font-size: 16px; /* Adjust font size */
+            }
         }
     </style>
 </head>
@@ -66,7 +90,7 @@
     <img src="ShameCloud.png" alt="Word cloud of shame" style="max-width:auto; height:300px;">
     <p>AI that converts bank statements into word clouds of shame.</p> 
     <p>Because you can't math and need more reasons to argue.</p>
-    <p class="small-center">Currently in alpha and requires Python proficiency to use.</p>
+    <p class="small-center">Currently in alpha. Requires Python proficiency to use.</p>
     <a href="https://github.com/sdrasco/BlameBot" class="button">View on GitHub</a>
 </header>
 
