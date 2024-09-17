@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BlameBot</title>
     <style>
         body {
@@ -31,10 +32,10 @@
 
         /* class for the smaller paragraph */
         .small-center {
-            font-size: 16px; /* Smaller font size */
+            font-size: 16px;
             text-align: center;
             max-width: 800px;
-            margin: 10px auto 30px; /* Adjust margins as needed */
+            margin: 10px auto 30px;
             line-height: 1.6;
         }
 
@@ -68,15 +69,15 @@
         /* Media query for smaller screens */
         @media (max-width: 600px) {
             h1 {
-                font-size: 36px; /* Reduce header size on small screens */
+                font-size: 32px; /* Further reduce header size */
             }
 
             p, .small-center {
-                font-size: 16px; /* Adjust paragraph font size */
+                font-size: 18px; /* Adjust paragraph font size for better readability */
             }
 
             a.button {
-                padding: 10px 20px; /* Reduce padding */
+                padding: 12px 24px; /* Slightly reduce padding */
                 font-size: 16px; /* Adjust font size */
             }
         }
@@ -90,7 +91,7 @@
     <img src="ShameCloud.png" alt="Word cloud of shame" style="max-width:auto; height:300px;">
     <p>AI that converts bank statements into word clouds of shame.</p> 
     <p>Because you can't math and need more reasons to argue.</p>
-    <p class="small-center">Currently in alpha. Requires Python proficiency to use.</p>
+    <p class="small-center">Currently in alpha and requires Python proficiency to use.</p>
     <a href="https://github.com/sdrasco/BlameBot" class="button">View on GitHub</a>
 </header>
 
