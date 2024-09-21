@@ -108,6 +108,9 @@ reputation of the guilty:
 
 - [colorful report](report.pdf): A colorful report.
 
+Keep in mind that BlameBot has full artistic license when it comes to color scheme, report layout, etc.  Once in a while it halucinates a 
+style so inovative that it isn't human redable. When that happens, try, try again.
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0. See the `LICENSE` file for more details.
