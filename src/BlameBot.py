@@ -843,7 +843,7 @@ monthly_sums['Month'] = monthly_sums['Month'].astype(str)
 plt.figure(figsize=(12, 6))
 plt.bar(monthly_sums['Month'], monthly_sums['Amount'], color='skyblue')
 plt.ylabel('USD')
-#plt.yticks([])  # This removes the tick labels
+plt.yticks([])  # This removes the tick labels
 plt.xticks(rotation=45)
 plt.tight_layout()
 plt.savefig('monthly_sums.png', dpi=300, bbox_inches='tight')
@@ -890,7 +890,7 @@ Structure the report as follows:
 1. **Summary of Data Used**
    - Include these basic statistics, but possibly others you think relevant.
    Summary:
-   - Date Range: {data_summary['Number of days covered']}
+   - Date Range: {data_summary['Number of days covered']} days
    - Total Spending: {data_summary['Total Spending']}
    - Average Monthly Spending: {data_summary['Average Monthly Spending']}
    - Highest Spending Month: {data_summary['Highest Spending Month']}
@@ -910,10 +910,10 @@ Structure the report as follows:
    - Provide an assessment of the income needed to sustain the suggested budget, including pre- and post-tax amounts, stating the assumed tax rates.
 
 7. **Sustainability with Investment Income**
-   - Include a second sustainability assessment assuming a combination of employment income and investment income from approximately $2 million USD invested in securities with medium risk. Consider realistic returns on investment and how this affects the income needed to meet the proposed budget.
+   - Include a second sustainability assessment assuming a combination of employment income and investment income from approximately $2,000,000 USD invested in securities with medium risk. Consider realistic returns on investment and how this affects the income needed to meet the proposed budget.
 
-End the report with a small footer made of the logo 'BlameBot.png' (an image of a robot) constrained to about an inch or two on a typical screen size 
-that links to https://blamebot.com/ when clicked. To the right of the image put self depricating words of family finance wisdom in a dry-humor style.
+End the report with a footer made of the logo 'BlameBot.png' (an image of a robot) constrained to about an inch or two on a typical screen size 
+that links to https://blamebot.com/ when clicked. To the right of the image put extremely funny self depricating words of family finance wisdom in a dry-humor style.
 
 ### Design Guidelines:
 - Use a minimalist, modern layout similar to the style of Google Fi or Octopus Energy bills (e.g. boxes should have rounded corners)
@@ -953,3 +953,46 @@ with open('financial_report.html', 'w') as file:
 
 print("Report written to 'financial_report.html'.")
 
+import pdfkit
+
+# Path to your HTML file and desired output PDF
+input_html = 'financial_report.html'
+output_pdf = 'financial_report.pdf'
+options = {
+    'enable-local-file-access': ''
+}
+pdfkit.from_file(input_html, output_pdf, options=options)
+
+print("PDF version of report written to 'financial_report.pdf'.")
+
+from bs4 import BeautifulSoup
+
+# Load the HTML file content
+with open("financial_report.html", "r") as file:
+    content = file.read()
+
+# Parse the HTML content
+soup = BeautifulSoup(content, "html.parser")
+
+# Redact dollar amounts
+for td in soup.find_all("td"):
+    if "$" in td.text:
+        td.string = "[REDACTED]"
+
+# Redact dollar amounts from paragraphs in the document as well
+for p in soup.find_all("p"):
+    p.string = re.sub(r"\$\d+(?:,\d{3})*(?:\.\d{2})?", "[REDACTED]", p.text)
+
+# Save the modified content to a new HTML file
+output_path = "financial_report_redacted.html"
+with open(output_path, "w") as file:
+    file.write(str(soup))
+
+print("Redacted report written to 'financial_report_redacted.html'.")
+
+# Path to your HTML file and desired output PDF
+input_html = 'financial_report_redacted.html'
+output_pdf = 'financial_report_redacted.pdf'
+pdfkit.from_file(input_html, output_pdf, options=options)
+
+print("PDF version of redacted report written to 'financial_report_redacted.pdf'.")
