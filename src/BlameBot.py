@@ -74,6 +74,17 @@ class AccountProcessor:
         """
         self.data["Date"] = pd.to_datetime(self.data[DateCol], dayfirst=UK_style)  
 
+    def clean_description(self, ColNames):
+        """
+        Construct the Description feature.
+
+        ColNames is the list of columns that we will keep, merged and normalized into Description.
+        
+        Merge and normalize all the text descriptors.
+        """
+        self.data['Description'] = self.data[ColNames].fillna('').astype(str).agg(' '.join, axis=1)
+        self.data['Description'] = self.data['Description'].str.lower()
+
     def chop_up(self):
         #Split large sales into more frequent multiple smaller
         amount_column = 'Amount'
@@ -141,7 +152,7 @@ class uk_bank(AccountProcessor):
 
         # clean
         self.clean_date(DateCol="Date", UK_style=True)
-        self.clean_description()
+        self.clean_description(ColNames=['Name', 'Address', 'Description'])
         self.clean_amount()
         
         # drop all the columns we don't need
@@ -149,16 +160,6 @@ class uk_bank(AccountProcessor):
         self.data = self.data[columns_to_keep]
         return self.data
 
-    def clean_description(self):
-        """
-        Construct the Description feature.
-        
-        Merge and normalize all the text descriptors.
-        """
-        #self.data['Description'] = self.data[['Category','Name', 'Address', 'Description']].fillna('').astype(str).agg(' '.join, axis=1)
-        self.data['Description'] = self.data[['Name', 'Address', 'Description']].fillna('').astype(str).agg(' '.join, axis=1)
-        self.data['Description'] = self.data['Description'].str.lower()
-        
     def clean_amount(self):
         """
         Construct the Amount feature.
@@ -206,24 +207,13 @@ class CreditCardUS(AccountProcessor):
 
         # clean
         self.clean_date(DateCol = "Transaction Date", UK_style=False)
-        self.clean_description()
+        self.clean_description(ColNames=['Description'])
         self.clean_amount()
         
         # drop all the columns we don't need
         columns_to_keep = ['Date', 'Description', 'Amount', 'Amount_Scaled']
         self.data = self.data[columns_to_keep]
         return self.data    
-
-    def clean_description(self):
-        """
-        Build the Description feature.
-        
-        normalize to lower case.
-        """
-        # normalize the description
-        #self.data['Description'] = self.data[['Category', 'Description']].fillna('').astype(str).agg(' '.join, axis=1)
-        self.data['Description'] = self.data['Description'].fillna('').astype(str)
-        self.data['Description'] = self.data['Description'].str.lower()
         
     def clean_amount(self):
         """
