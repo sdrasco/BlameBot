@@ -406,7 +406,7 @@ class AmazonProcessor:
             lambda row: self.GBPtoUSD.convert(row['OurPriceTax'], row['OrderDate Parsed']),
             axis=1
         )
-        
+
         # Drop unwanted columns and rename the ones we keep
         self.digital = self.digital[['OrderDate Parsed', 'OrderId', 'Title', 'OurPriceTax USD']].copy()
         self.digital.rename(columns={
@@ -881,56 +881,60 @@ image_descriptions = """
 - Image 2 ('monthly_sums.png'): A bar chart displaying monthly spending totals over the past year.
 """
 
-# Create a prompt with your data summary and image descriptions (pick your style by editing)
-
-# 
-# For dry style, start prompt with this
-#
-# prompt = f"""
-# You are a sharp and highly paid wealth manager assembling a report for my family. You are humorless and wise. 
-# Based on the following financial summary and image descriptions, provide reflection and advice.
-
-#
-# For fun style, start prompt with this
-#
-# prompt = f"""
-# You are a wise and valued old friend and financial advisor to my family. You have a dry, self-deprecating 
-# sense of humor, like a disgruntled AI in an Iain Banks novel. Based on the following financial summary and 
-# image descriptions, provide a humorous reflection and advice.
-
-
 prompt = f"""
-You are a sharp and highly paid wealth manager assembling a report for my family. You are humorless and wise. 
-Based on the following financial summary and image descriptions, provide reflection and advice.
+You are a sharp and highly paid wealth manager assembling a report for my family. You are humorless and wise.
+Based on the following financial summary and image descriptions, provide a detailed reflection and advice.
 
-Summary:
-- Date Range: {data_summary['Number of days covered']}
-- Total Spending: {data_summary['Total Spending']}
-- Average Monthly Spending: {data_summary['Average Monthly Spending']}
-- Highest Spending Month: {data_summary['Highest Spending Month']}
-- Spending per Category: {data_summary['Spending per Category']}
+Structure the report as follows:
 
-Images:
-{image_descriptions}
+1. **Summary of Data Used**
+   - Include these basic statistics, but possibly others you think relevant.
+   Summary:
+   - Date Range: {data_summary['Number of days covered']}
+   - Total Spending: {data_summary['Total Spending']}
+   - Average Monthly Spending: {data_summary['Average Monthly Spending']}
+   - Highest Spending Month: {data_summary['Highest Spending Month']}
+   - Spending per Category: {data_summary['Spending per Category']} (no need to show all categories)
 
-Please do not repeat the summary or the image descriptions verbatim. Instead, create your own formatted report, 
-with its own summary table of basic statistics or descriptors. Do not talk about yourself in the report.
+2. **Monthly Spending and Word Cloud**
+   - Reference and explain both the monthly spending image ('monthly_sums.png') and the word cloud ('shame_cloud.png').
+   - Discuss trends visible in these images and any important outliers.
 
-You should include sections on projections for future annual costs, and a section on sustainability that describes
-annual incomes needed to sustain. That section should include pre and post tax aoumnts of income, were the taxes could 
-be typical of the US or UK, as some income will be from businesses in each country.
+3. **Projections for Annual Costs**
+   - Based on current spending trends, provide projections for annual costs. Consider factors such as potential inflation, lifestyle changes, or other likely cost changes.
+   
+4. **Suggested Annual Budget by Category**
+   - Propose a more concise annual budget, consolidating spending categories if necessary.
 
-You should also include a section that proposes an annual budget.  That budget can use a smaller set of categories than the one provided.
+6. **Sustainability Outline**
+   - Provide an assessment of the income needed to sustain the suggested budget, including pre- and post-tax amounts, stating the assumed tax rates.
 
-Be verbose. Every section of the report should have some text, and every table or should be referenced and discussed.
+7. **Sustainability with Investment Income**
+   - Include a second sustainability assessment assuming a combination of employment income and investment income from approximately $2 million USD invested in securities with medium risk. Consider realistic returns on investment and how this affects the income needed to meet the proposed budget.
 
-Your output should be in the form of LaTeX code. The report should include sections 
-such as Introduction, Overview of Spending, Category Analysis, and Advice.   
-Assume the images are named 'shame_cloud.png' and 'monthly_sums.png'. Reference the images appropriately, and 
-make sure they are large enough to see, say 90% of the document width.
+End the report with a small footer made of the logo 'BlameBot.png' (an image of a robot) constrained to about an inch or two on a typical screen size 
+that links to https://blamebot.com/ when clicked. To the right of the image put self depricating words of family finance wisdom in a dry-humor style.
 
-IMPORTANT: Do not include any additional text at all outside of the LaTeX code. That includes any marker 
-telling me that it's latex code.
+### Design Guidelines:
+- Use a minimalist, modern layout similar to the style of Google Fi or Octopus Energy bills (e.g. boxes should have rounded corners)
+- All content should be confined to the central 60% of the screen width.  All tables should fit within their boxes.
+- Image sizes should be constrained to fit within their contexts
+- Incorporate clean, large headers, and concise sections with ample white space.
+- For the "Summary" section, use a simple table with clean borders.
+- The "Monthly Spending and Word Cloud" section should include large, centered images with explanatory text below them.
+- Use **bold headings** and well-spaced paragraphs for clarity.
+- Ensure all numbers (such as amounts) are formatted appropriately (e.g., currency with commas and two decimal places).
+- Color scheme: Background should be a soft orange, Boxes should be a soft light blue, headers should be a soft red. Text should be a soft black.  The report should be colorful, but the colors should be subtle and calming.
+- **No repetition of the summary or images verbatim**, and use your own discretion in explaining the data.
+
+### HTML Output Requirements:
+- Provide the HTML code **without any markdown or code block formatting** (e.g., no ```html or ``` around the code).
+- Use appropriate HTML5 elements (`<section>`, `<header>`, `<table>`, etc.) to structure the document.
+- Include basic inline CSS for layout and typography. Focus on minimalism and readability.
+- The images ('shame_cloud.png' and 'monthly_sums.png') should be referenced with `<img>` tags.
+- All text should be wrapped in `<p>`, `<h1>`, `<h2>`, or `<div>` tags, ensuring proper hierarchy.
+
+Please generate the report as a single HTML document with embedded CSS. **Do not include any additional text at all outside of the HTML code.**
 """
 
 # Generate advice using OpenAI's GPT-4o
@@ -940,51 +944,12 @@ response = openai.ChatCompletion.create(
     temperature=0.7
 )
 
-# Extract the generated LaTeX code
+# Extract the generated HTML code
 advice = response.choices[0].message['content'].strip()
 
-# Extract the generated LaTeX code
-latex_code = response.choices[0].message['content'].strip()
+# Write the HTML code to a .html file
+with open('financial_report.html', 'w') as file:
+    file.write(advice)
 
-# Write the LaTeX code to a .tex file
-with open('financial_report.tex', 'w') as file:
-    file.write(latex_code)
+print("Report written to 'financial_report.html'.")
 
-print("Report written to 'financial_report.tex'.")
-
-def compile_latex(tex_file, num_runs=3):
-    """
-    Compiles a LaTeX .tex file multiple times to resolve references.
-
-    Parameters:
-    - tex_file (str): The path to the .tex file to compile.
-    - num_runs (int): Number of times to run the LaTeX compiler.
-
-    Returns:
-    - bool: True if compilation succeeded in all runs, False otherwise.
-    """
-    compile_command = ['pdflatex', tex_file]
-    
-    for run in range(1, num_runs + 1):
-        print(f"Running pdflatex, pass {run}...")
-        try:
-            # Run the pdflatex command, suppressing stdout and stderr
-            result = subprocess.run(
-                compile_command,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=True
-            )
-        except subprocess.CalledProcessError as e:
-            print(f"Error: pdflatex failed on pass {run}.")
-            return False
-    
-    print(f"LaTeX file '{tex_file}' has been successfully compiled to 'financial_report.pdf'.")
-    os.system('rm financial_report.aux'); # maybe remove this OS-specific line
-    os.system('rm financial_report.log'); # maybe remove this OS-specific line
-    os.system('rm financial_report.out'); # maybe remove this OS-specific line
-    os.system('rm financial_report.toc'); # maybe remove this OS-specific line
-    return True
-
-# Compile the report
-compile_latex('financial_report.tex');
