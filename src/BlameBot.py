@@ -61,6 +61,19 @@ class AccountProcessor:
         else:
             raise ValueError("No valid DataFrames to concatenate after validation.")
 
+    def clean_date(self, DateCol="Date", UK_style=True):
+        """
+        Build the date feature. 
+
+        DateCol is the column name for the dates that we are converting ("Date" by dfault).
+
+        UK_style describes the input data (True by default, should be 
+        made False for accounts with US conventions)
+        
+        Convert dates to ISO standard (YYYY-MM-DD).
+        """
+        self.data["Date"] = pd.to_datetime(self.data[DateCol], dayfirst=UK_style)  
+
     def chop_up(self):
         #Split large sales into more frequent multiple smaller
         amount_column = 'Amount'
@@ -127,7 +140,7 @@ class uk_bank(AccountProcessor):
         self.load_and_validate_data()
 
         # clean
-        self.clean_date()
+        self.clean_date(DateCol="Date", UK_style=True)
         self.clean_description()
         self.clean_amount()
         
@@ -135,14 +148,6 @@ class uk_bank(AccountProcessor):
         columns_to_keep = ['Date', 'Description', 'Amount', 'Amount_Scaled']
         self.data = self.data[columns_to_keep]
         return self.data
-
-    def clean_date(self):
-        """
-        Build the date feature.
-        
-        Convert dates to ISO standard (YYYY-MM-DD).
-        """
-        self.data["Date"] = pd.to_datetime(self.data["Date"], dayfirst=True)  # UK inputs
 
     def clean_description(self):
         """
@@ -200,7 +205,7 @@ class CreditCardUS(AccountProcessor):
         self.load_and_validate_data()
 
         # clean
-        self.clean_date()
+        self.clean_date(DateCol = "Transaction Date", UK_style=False)
         self.clean_description()
         self.clean_amount()
         
@@ -209,14 +214,6 @@ class CreditCardUS(AccountProcessor):
         self.data = self.data[columns_to_keep]
         return self.data    
 
-    def clean_date(self):
-        """
-        Build the Date feature.
-        
-        Normalize to ISO standard (YYYY-MM-DD) for 'Transaction Date'.
-        """
-        self.data['Date'] = pd.to_datetime(self.data['Transaction Date'], dayfirst=False)  # American inputs
-            
     def clean_description(self):
         """
         Build the Description feature.
