@@ -103,10 +103,10 @@ To adapt BlameBot to your specific needs, you might consider the following custo
 
 ### Reports
 
-Reports are now minimialist, colorful, and save as html files.  We used to make PDF reports though.  Here are examples of those:
+Reports are now minimialist, colorful, and save as both html and PDF files.  Here's an example, redacted to protect the 
+reputation of the guilty:
 
-- [Fun Report](fun_report.pdf): A humorous report.
-- [Dry Report](dry_report.pdf): A humorless report.
+- [colorful report](report.pdf): A colorful report.
 
 ## License
 
