@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 import sys
 import subprocess
 import os
@@ -64,7 +61,7 @@ class AccountProcessor:
         else:
             raise ValueError("No valid DataFrames to concatenate after validation.")
 
-    def Chopup(self):
+    def chop_up(self):
         #Split large sales into more frequent multiple smaller
         amount_column = 'Amount'
         max_amount=1000
@@ -130,16 +127,16 @@ class uk_bank(AccountProcessor):
         self.load_and_validate_data()
 
         # clean
-        self.clean_Date()
-        self.clean_Description()
-        self.clean_Amount()
+        self.clean_date()
+        self.clean_description()
+        self.clean_amount()
         
         # drop all the columns we don't need
         columns_to_keep = ['Date', 'Description', 'Amount', 'Amount_Scaled']
         self.data = self.data[columns_to_keep]
         return self.data
 
-    def clean_Date(self):
+    def clean_date(self):
         """
         Build the date feature.
         
@@ -147,7 +144,7 @@ class uk_bank(AccountProcessor):
         """
         self.data["Date"] = pd.to_datetime(self.data["Date"], dayfirst=True)  # UK inputs
 
-    def clean_Description(self):
+    def clean_description(self):
         """
         Construct the Description feature.
         
@@ -157,7 +154,7 @@ class uk_bank(AccountProcessor):
         self.data['Description'] = self.data[['Name', 'Address', 'Description']].fillna('').astype(str).agg(' '.join, axis=1)
         self.data['Description'] = self.data['Description'].str.lower()
         
-    def clean_Amount(self):
+    def clean_amount(self):
         """
         Construct the Amount feature.
         
@@ -182,13 +179,13 @@ class uk_bank(AccountProcessor):
         )
         
         # Split large sales into more frequent multiple smaller ones
-        self.Chopup()
+        self.chop_up()
         
         # scale sale amounts
         scaler = StandardScaler()
         self.data['Amount_Scaled'] = scaler.fit_transform(np.log1p(self.data['Amount']).values.reshape(-1, 1))  
 
-class us_credit_card(AccountProcessor):
+class CreditCardUS(AccountProcessor):
     def __init__(self, data_directory):
         """
         Initialize with the directory containing US credit card statements.
@@ -203,16 +200,16 @@ class us_credit_card(AccountProcessor):
         self.load_and_validate_data()
 
         # clean
-        self.clean_Date()
-        self.clean_Description()
-        self.clean_Amount()
+        self.clean_date()
+        self.clean_description()
+        self.clean_amount()
         
         # drop all the columns we don't need
         columns_to_keep = ['Date', 'Description', 'Amount', 'Amount_Scaled']
         self.data = self.data[columns_to_keep]
         return self.data    
 
-    def clean_Date(self):
+    def clean_date(self):
         """
         Build the Date feature.
         
@@ -220,7 +217,7 @@ class us_credit_card(AccountProcessor):
         """
         self.data['Date'] = pd.to_datetime(self.data['Transaction Date'], dayfirst=False)  # American inputs
             
-    def clean_Description(self):
+    def clean_description(self):
         """
         Build the Description feature.
         
@@ -231,7 +228,7 @@ class us_credit_card(AccountProcessor):
         self.data['Description'] = self.data['Description'].fillna('').astype(str)
         self.data['Description'] = self.data['Description'].str.lower()
         
-    def clean_Amount(self):
+    def clean_amount(self):
         """
         Build Amount feature.
         
@@ -249,7 +246,7 @@ class us_credit_card(AccountProcessor):
             self.data['Amount'] = self.data['Amount'].abs()
 
         #Split large sales into more frequent multiple smaller ones
-        self.Chopup()
+        self.chop_up()
         
         # scale sale amounts
         scaler = StandardScaler()
@@ -347,7 +344,7 @@ class AmazonProcessor:
         # Initialize the GBP to USD converter
         self.GBPtoUSD = GBPtoUSD()
     
-    def CleanRetail(self):
+    def clean_retail(self):
         """
         Import and clean the amazon retail order history.
         """
@@ -399,7 +396,7 @@ class AmazonProcessor:
         scaler = StandardScaler()
         self.retail['Amount_Scaled'] = scaler.fit_transform(np.log1p(self.retail['Amount']).values.reshape(-1, 1))  
 
-    def CleanDigital(self):
+    def clean_digital(self):
         """
         Import and clean the amazon digital order history.
         """
@@ -433,7 +430,7 @@ class AmazonProcessor:
         scaler = StandardScaler()
         self.digital['Amount_Scaled'] = scaler.fit_transform(np.log1p(self.digital['Amount']).values.reshape(-1, 1))  
 
-    def CrossReference(self):
+    def cross_reference(self):
         """
         Loop through all retail and digital Amazon orders. When a match is found:
         
@@ -502,7 +499,7 @@ class AmazonProcessor:
                 relative_diff = (matching_statements['Amount'] - summed_amount).abs() / summed_amount
                 
                 # Set a threshold for relative difference (e.g., 15%)
-                threshold = 0.1
+                threshold = 0.2
                 close_matches = matching_statements[relative_diff < threshold]
                 
                 if not close_matches.empty:
@@ -556,13 +553,13 @@ class AmazonProcessor:
         """
         
         # import and clean the order histories
-        self.CleanDigital()
-        self.CleanRetail()
-        self.CrossReference()
+        self.clean_digital()
+        self.clean_retail()
+        self.cross_reference()
         
         return self.statements
 
-class AI_FastText_Classifier:
+class AIClassifier:
     def __init__(self, data, batch_size=200):
         self.data = data
         self.batch_size = batch_size
@@ -661,7 +658,7 @@ class AI_FastText_Classifier:
         # Sort crude_names 
         crude_names = sort_dict(crude_names)
      
-        def AIClarification(crude_names):
+        def ai_clarification(crude_names):
             """
             Calls the OpenAI API to suggest concise and intuitive budget category names
             for the provided cluster descriptions. Extracts and returns the resulting 
@@ -740,12 +737,12 @@ class AI_FastText_Classifier:
 
         if USEAI:
             print("Using GPT-4o to clarify spending category names.")
-            AI_names = AIClarification(crude_names)
+            AI_names = ai_clarification(crude_names)
 
         # Using the new dictionary, label the transactions
         self.data['Category'] = self.data['Cluster_Label'].map(AI_names)
 
-def ShameCloud(classifier_data, exclude_category=None, output_file=None):
+def shame_cloud(classifier_data, exclude_category=None, output_file=None):
     """
     Generates and optionally saves a word cloud based on the spending categories from the classifier data.
 
@@ -797,7 +794,7 @@ uk_bank_directory = '../data/uk_bank_statements/'
 amzn_directory = '../data/Amazon/'
 
 # Process the statements
-uscc = us_credit_card(us_cc_directory)
+uscc = CreditCardUS(us_cc_directory)
 clean_uscc = uscc.process()
 print("\nUS credit card summary:\n")
 print(uscc.summarize())
@@ -814,10 +811,10 @@ amzn = AmazonProcessor(statements, amzn_directory)
 cleaned_df = amzn.process()
 
 # apply the classifier
-classified = AI_FastText_Classifier(cleaned_df, batch_size=200)
+classified = AIClassifier(cleaned_df, batch_size=200)
 
 # show the shame cloud
-ShameCloud(classified.data,output_file="ShameCloud.png")
+shame_cloud(classified.data,output_file="shame_cloud.png")
 
 classified.data['Category'].value_counts()
 
@@ -832,6 +829,7 @@ category_sums = classified.data.groupby('Category')['Amount'].sum()
 category_sums = category_sums.sort_values(ascending=False)
 
 # Display the sorted summed amounts for each category
+pd.set_option('display.max_rows', None)
 print(f"\nCategory totals:\n{category_sums}\n")
 
 data = classified.data
@@ -889,7 +887,7 @@ data_summary = {
 
 # Descriptions of the images
 image_descriptions = """
-- Image 1 ('ShameCloud.png'): A word cloud showcasing the most frequent spending categories.
+- Image 1 ('shame_cloud.png'): A word cloud showcasing the most frequent spending categories.
 - Image 2 ('monthly_sums.png'): A bar chart displaying monthly spending totals over the past year.
 """
 
@@ -938,7 +936,7 @@ Be verbose. Every section of the report should have some text, and every table o
 
 Your output should be in the form of LaTeX code. The report should include sections 
 such as Introduction, Overview of Spending, Category Analysis, and Advice.   
-Assume the images are named 'ShameCloud.png' and 'monthly_sums.png'. Reference the images appropriately, and 
+Assume the images are named 'shame_cloud.png' and 'monthly_sums.png'. Reference the images appropriately, and 
 make sure they are large enough to see, say 90% of the document width.
 
 IMPORTANT: Do not include any additional text at all outside of the LaTeX code. That includes any marker 
