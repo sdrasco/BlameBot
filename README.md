@@ -103,10 +103,8 @@ To adapt BlameBot to your specific needs, you might consider the following custo
 
 ### Reports
 
-Reports are now minimialist, colorful, and save as both html and PDF files.  Here's an example, redacted to protect the 
-reputation of the guilty:
-
-- [colorful report](report.pdf): A colorful report.
+Reports are now minimialist, colorful, and save as both html and PDF files.  [Here's an example, redacted to protect the 
+reputation of the guilty.](report.pdf)
 
 Keep in mind that BlameBot has full artistic license when it comes to color scheme, report layout, etc.  Once in a while it halucinates a 
 style so inovative that it isn't human redable. When that happens, try, try again.
