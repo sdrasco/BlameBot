@@ -175,13 +175,16 @@ class uk_bank(AccountProcessor):
         if 'Amount' in self.data.columns:
             self.data['Amount'] = self.data['Amount'].abs()
             
-        # All of these sales are in GBP.  Convert them to USD using our converter. 
+        # Convert GBP values to USD using our converter, and update currency label. 
         # This converts them to dollars at the time of the transactions using an exchange rate table
         # update daily. We could updated every minute, as we have minute-level data in statements,
         # but may then need a new exange rate source (current using yahoo finance API output, stored to file).
         self.converter = GBPtoUSD()
-        self.data['Amount_USD'] = self.data.apply(
-            lambda row: self.converter.convert(row['Amount'], row['Date']), axis=1
+        self.data[['Amount_USD', 'Currency']] = self.data.apply(
+            lambda row: pd.Series([
+                self.converter.convert(row['Amount'], row['Date']) if row['Currency'] == 'GBP' else row['Amount'],
+                'USD' if row['Currency'] == 'GBP' else row['Currency']
+            ]), axis=1
         )
         
         # Split large sales into more frequent multiple smaller ones
