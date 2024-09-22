@@ -529,9 +529,8 @@ class AmazonProcessor:
         return self.statements
 
 class AIClassifier:
-    def __init__(self, data, batch_size=200):
+    def __init__(self, data):
         self.data = data
-        self.batch_size = batch_size
         self.api_key = os.getenv("OPENAI_API_KEY")
         
         # Sort the data to ensure consistent order
@@ -539,6 +538,13 @@ class AIClassifier:
 
         # Being extra cautious about setting random seeds that I may not have noticed.
         np.random.seed(SEED)
+
+        # Define custom keywords for important categories
+        category_keywords = {
+            'Travel': ['travel'],
+            'Groceries': ['groceries'],
+            'Utilities': ['octopus', 'energy', 'doorstepglassrecycling', 'starlink internet', 'talktalk']
+        }
 
         # Train FastText model on the descriptions
         sentences = [desc.split() for desc in self.data['Description'].values]
@@ -550,16 +556,66 @@ class AIClassifier:
             workers=8,
             seed=SEED
         )  # Adjust parameters as needed
-        
-        # Create sentence vectors by averaging word vectors
-        def get_sentence_vector(sentence):
+
+        # Create sentence vectors by giving higher weight to keyword-defined categories
+        def get_weighted_sentence_vector(sentence, model, category_keywords):
             words = sentence.split()
-            vectors = [model.wv[word] for word in words if word in model.wv]
-            return np.mean(vectors, axis=0) if vectors else np.zeros(model.vector_size)
-        
-        # Apply vectorization to the descriptions
-        self.data['FastText_Vector'] = self.data['Description'].apply(get_sentence_vector)
+            weighted_vectors = []
+
+            for word in words:
+                if word in model.wv:
+                    # Default weight is 1 for regular words
+                    weight = 1  
+                    # Give extra weight to key words
+                    if word in category_keywords['Travel']:
+                        weight = 10
+                    elif word in category_keywords['Groceries']:
+                        weight = 10 
+                    elif word in category_keywords['Utilities']:
+                        weight = 10  
+                        
+                    # Multiply the word vector by its weight
+                    weighted_vectors.append(weight * model.wv[word])
+            
+            # Calculate the average vector for the sentence
+            return np.mean(weighted_vectors, axis=0) if weighted_vectors else np.zeros(model.vector_size)
+
+        # Apply weighted vectorization to the descriptions
+        self.data['FastText_Vector'] = self.data['Description'].apply(lambda x: get_weighted_sentence_vector(x, model, category_keywords))
         vector_df = pd.DataFrame(self.data['FastText_Vector'].tolist(), index=self.data.index)
+
+        # make some post-clustering rules as a backup plan for getting keywords where we want them
+        def apply_post_clustering_rules(data, category_keywords):
+            
+            # Loop through each category and its associated keywords
+            for category, keywords in category_keywords.items():
+                # Create a mask to find rows containing any of the keywords
+                keyword_mask = data['Description'].str.contains('|'.join(keywords), case=False)
+                # Assign the category to rows that match the keywords
+                data.loc[keyword_mask, 'Category'] = category
+            
+            return data
+
+        # # Train FastText model on the descriptions
+        # sentences = [desc.split() for desc in self.data['Description'].values]
+        # model = FastText(
+        #     sentences, 
+        #     vector_size=100, 
+        #     window=3, 
+        #     min_count=2, 
+        #     workers=8,
+        #     seed=SEED
+        # )  # Adjust parameters as needed
+        
+        # # Create sentence vectors by averaging word vectors
+        # def get_sentence_vector(sentence):
+        #     words = sentence.split()
+        #     vectors = [model.wv[word] for word in words if word in model.wv]
+        #     return np.mean(vectors, axis=0) if vectors else np.zeros(model.vector_size)
+        
+        # # Apply vectorization to the descriptions
+        # self.data['FastText_Vector'] = self.data['Description'].apply(get_sentence_vector)
+        # vector_df = pd.DataFrame(self.data['FastText_Vector'].tolist(), index=self.data.index)
 
         # Combine vectorized descriptions with scaled amounts
         combined_features = pd.concat([vector_df, self.data[['Amount_Scaled']]], axis=1).fillna(0)
@@ -572,12 +628,15 @@ class AIClassifier:
         #
         # Apply HDBSCAN Clustering and add Cluster Labels to the Original DataFrame
         clusterer = hdbscan.HDBSCAN(
-            min_cluster_size=10, 
+            min_cluster_size=15, 
             min_samples=4,
             cluster_selection_method='eom'
         )  
         cluster_labels = clusterer.fit_predict(combined_features)
         self.data['Cluster_Label'] = cluster_labels
+
+        # Apply post-clustering rules to force certain keywords into predefined categories
+        self.data = apply_post_clustering_rules(self.data, category_keywords)
 
         #
         # DBSCAN (alternative to HDBSCAN)
@@ -608,7 +667,7 @@ class AIClassifier:
             keywords = [word for desc in cluster_descriptions for word in desc.split() if word in model.wv]
             common_keywords = pd.Series(keywords).value_counts().head(10).index.tolist()
             crude_names[cluster] = ", ".join(common_keywords)
-        
+
         def sort_dict(d):
             """
             Converts dictionary keys to integers and returns a new dictionary sorted by these keys.
@@ -764,7 +823,7 @@ amzn_directory = '../data/Amazon/'
 
 # Process the statements
 uscc = CreditCardUS(us_cc_directory)
-clean_uscc = uscc.process(DateCol='Transaction Date', UK_style=False, DescriptionColumnNames=['Description'])
+clean_uscc = uscc.process(DateCol='Transaction Date', UK_style=False, DescriptionColumnNames=['Description', 'Category'])
 print("\nUS credit card summary:\n")
 print(uscc.summarize())
 ukbank = uk_bank(uk_bank_directory)
@@ -780,7 +839,7 @@ amzn = AmazonProcessor(statements, amzn_directory)
 cleaned_df = amzn.process()
 
 # apply the classifier
-classified = AIClassifier(cleaned_df, batch_size=200)
+classified = AIClassifier(cleaned_df)
 
 # show the shame cloud
 shame_cloud(classified.data,output_file="shame_cloud.png")
@@ -869,8 +928,8 @@ blamebot_base64 = convert_image_to_base64('BlameBot.png')
 
 
 prompt = f"""
-You are a sharp and highly paid wealth manager assembling a report for my family. You also quite funny with a tendancy to show off your dry witt.
-Based on the following financial summary and image descriptions, provide a detailed reflection and advice.
+You are a sharp and highly paid wealth manager assembling a report for my family. You also quite funny. 
+Based on the following financial summary and image descriptions, provide a detailed reflection and advice, oh and do show off your dry witt in your report.
 
 Structure the report as follows:
 
