@@ -137,7 +137,7 @@ Each report ends with a pearl of wisdom inspired by your spending habits. Exampl
 
 1. **My report looks outlandish. The images are the size of the moon!  What gives?**
 
-   - BlameBot has full artistic license when it comes to color scheme, report layout, etc. Once in a while it halucinates a style so inovative that it isn't human redable. When that happens, try, try again.
+   - BlameBot has full artistic license when it comes to color scheme, report layout, etc. Occasionaly it halucinates a style so inovative that it isn't human redable. When that happens, try, try again.
 
 2. **Did your artist in residence make the adorable BlameBot logo?**
 
