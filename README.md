@@ -103,21 +103,21 @@ To adapt BlameBot to your specific needs, you might consider the following custo
 
 ### Reports
 
-Reports are now minimialist, colorful, and save as both html and PDF files.  [Here's an example, redacted to protect the 
-reputation of the guilty.](report.pdf)
+Reports are now minimialist, colorful, and save as both html with embedded images and as PDF files so colorful they'll blow your printing budget.  Here's are some examples, redacted to protect the reputation of the guilty:
 
-Keep in mind that BlameBot has full artistic license when it comes to color scheme, report layout, etc.  Once in a while it halucinates a 
-style so inovative that it isn't human redable. When that happens, try, try again.
+   -[Example Report](report1.html)
+   -[Another Example](report2.html)
+   -[Okay, but this is the last one](report3.html)
 
 ## Fun FAQs
 
-1. **My report looks outlandish, the images are practically the size of the moon.  What gives?**
+1. **My report looks outlandish. The images are the size of the moon!  What gives?**
 
-   - **Answer:** BlameBot has full artistic license when it comes to color scheme, report layout, etc. Once in a while it halucinates a style so inovative that it isn't human redable. When that happens, try, try again.
+   - BlameBot has full artistic license when it comes to color scheme, report layout, etc. Once in a while it halucinates a style so inovative that it isn't human redable. When that happens, try, try again.
 
 2. **Did your artist in residence make the adorable BlameBot logo?**
 
-   - **Answer:** No, we outsourced it to OpenAI's Dalle.
+   - No. As you might guess from financial wisdom, we couldn't afford a human artist. We outsourced that task to OpenAI's Dalle.
 
 ## License
 
