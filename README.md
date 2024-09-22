@@ -36,8 +36,7 @@ Before running the Python code, ensure you have the following dependencies insta
 
 1. System Dependency (macOS):
     ```
-    bash
-    brew reinstall wkhtmltopdf
+    brew install wkhtmltopdf
     ```
     
 2. Clone the repository:
