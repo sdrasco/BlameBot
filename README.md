@@ -112,8 +112,8 @@ The good news and the bad (in html and PDF, with and without redacting in case y
 Reports minimialist and colorful. The PDF files are so colorful they'll blow your printing budget.  Here are examples, redacted to protect the guilty:
 
    - [Example Report](https://blamebot.com/report1.html)
-   - [Another Example](report2.pdf)
-   - [Okay, but this is the last one](report3.pdf)
+   - [Another Example](https://blamebot.com/report2.html)
+   - [Okay, but this is the last one](https://blamebot.com/report3.html)
 
 ### Words of wisdom
 
