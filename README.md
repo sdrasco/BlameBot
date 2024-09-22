@@ -19,8 +19,6 @@ BlameBot is a Python-based tool designed to help families analyze their financia
 
 - `src/BlameBot.py`: The main Python script containing all the code for data processing, clustering, and report generation.
 - `BlameBot.png`: The project logo featuring our mischievous AI overlord mascot.
-- `ShameCloud.png`: An example word cloud showcasing the most frequent spending categories.
-- `monthly.png`: An example bar chart displaying monthly spending totals.
 
 ## Getting Started
 
