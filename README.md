@@ -111,9 +111,13 @@ style so inovative that it isn't human redable. When that happens, try, try agai
 
 ## Fun FAQs
 
-**Question:** Did your artist in residence make the adorable BlameBot logo?
+1. **My report looks outlandish, the images are practically the size of the moon.  What gives?**
 
-**Answer:** No, we outsourced it to OpenAI's Dalle.
+   - **Answer:** BlameBot has full artistic license when it comes to color scheme, report layout, etc. Once in a while it halucinates a style so inovative that it isn't human redable. When that happens, try, try again.
+
+2. **Did your artist in residence make the adorable BlameBot logo?**
+
+   - **Answer:** No, we outsourced it to OpenAI's Dalle.
 
 ## License
 
