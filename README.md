@@ -105,9 +105,9 @@ To adapt BlameBot to your specific needs, you might consider the following custo
 
 Reports are now minimialist, colorful, and save as both html with embedded images and as PDF files so colorful they'll blow your printing budget.  Here's are some examples, redacted to protect the reputation of the guilty:
 
-   -[Example Report](report1.html)
-   -[Another Example](report2.html)
-   -[Okay, but this is the last one](report3.html)
+   - [Example Report](report1.html)
+   - [Another Example](report2.html)
+   - [Okay, but this is the last one](report3.html)
 
 ## Fun FAQs
 
