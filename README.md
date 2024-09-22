@@ -21,8 +21,6 @@ BlameBot is a Python-based tool designed to help families analyze their financia
 - `BlameBot.png`: The project logo featuring our mischievous AI overlord mascot.
 - `ShameCloud.png`: An example word cloud showcasing the most frequent spending categories.
 - `monthly.png`: An example bar chart displaying monthly spending totals.
-- `fun_report.pdf`: Example of a humorous report output.
-- `dry_report.pdf`: Example of a humorless report output.
 
 ## Getting Started
 
@@ -110,9 +108,10 @@ To adapt BlameBot to your specific needs, you might consider the following custo
 
 ### Reports
 
-Reports are now minimialist, colorful, and save as both html with embedded images and as PDF files so colorful they'll blow your printing budget.  Here are examples, redacted to protect the reputation of the guilty:
+The good news and the bad (in html and PDF, with and without redacting in case you want to hide your shame while going viral.
+Reports minimialist and colorful. The PDF files are so colorful they'll blow your printing budget.  Here are examples, redacted to protect the guilty:
 
-   - [Example Report](report1.pdf)
+   - [Example Report](https://blamebot.com/report1.html)
    - [Another Example](report2.pdf)
    - [Okay, but this is the last one](report3.pdf)
 
