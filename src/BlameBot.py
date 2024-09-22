@@ -7,6 +7,8 @@ import json
 import openai
 import pandas as pd
 import numpy as np
+import base64
+from bs4 import BeautifulSoup
 import matplotlib.pyplot as plt
 from glob import glob
 from gensim.models import FastText
@@ -842,7 +844,7 @@ monthly_sums['Month'] = monthly_sums['Month'].astype(str)
 # Save bar chart. I prefer the style above, but saving it to file is an elaborate process.
 plt.figure(figsize=(12, 6))
 plt.bar(monthly_sums['Month'], monthly_sums['Amount'], color='skyblue')
-plt.ylabel('USD')
+#plt.ylabel('USD')
 plt.yticks([])  # This removes the tick labels
 plt.xticks(rotation=45)
 plt.tight_layout()
@@ -875,11 +877,19 @@ data_summary = {
     'Spending per Category': category_sums
 }
 
-# Descriptions of the images
-image_descriptions = """
-- Image 1 ('shame_cloud.png'): A word cloud showcasing the most frequent spending categories.
-- Image 2 ('monthly_sums.png'): A bar chart displaying monthly spending totals over the past year.
-"""
+
+# convert images to base64 so that we can imbed them in the reports
+def convert_image_to_base64(image_path):
+    """Converts an image to a Base64 encoded string."""
+    with open(image_path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+    return encoded_string
+
+# Base64 encoded images
+monthly_sums_base64 = convert_image_to_base64('monthly_sums.png')
+shame_cloud_base64 = convert_image_to_base64('shame_cloud.png')
+blamebot_base64 = convert_image_to_base64('BlameBot.png')
+
 
 prompt = f"""
 You are a sharp and highly paid wealth manager assembling a report for my family. You are humorless and wise.
@@ -947,6 +957,11 @@ response = openai.ChatCompletion.create(
 # Extract the generated HTML code
 advice = response.choices[0].message['content'].strip()
 
+# Modify HTML to embed images as Base64
+advice = advice.replace('src="monthly_sums.png"', f'src="data:image/png;base64,{monthly_sums_base64}"')
+advice = advice.replace('src="shame_cloud.png"', f'src="data:image/png;base64,{shame_cloud_base64}"')
+advice = advice.replace('src="BlameBot.png"', f'src="data:image/png;base64,{blamebot_base64}"')
+
 # Write the HTML code to a .html file
 with open('financial_report.html', 'w') as file:
     file.write(advice)
@@ -964,8 +979,6 @@ options = {
 pdfkit.from_file(input_html, output_pdf, options=options)
 
 print("PDF version of report written to 'financial_report.pdf'.")
-
-from bs4 import BeautifulSoup
 
 # Load the HTML file content
 with open("financial_report.html", "r") as file:
