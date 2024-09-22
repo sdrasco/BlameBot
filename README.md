@@ -109,6 +109,12 @@ reputation of the guilty.](report.pdf)
 Keep in mind that BlameBot has full artistic license when it comes to color scheme, report layout, etc.  Once in a while it halucinates a 
 style so inovative that it isn't human redable. When that happens, try, try again.
 
+## Fun FAQs
+
+**Question:** Did your artist in residence make the adorable BlameBot logo?
+
+**Answer:** No, we outsourced it to OpenAI's Dalle.
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0. See the `LICENSE` file for more details.
