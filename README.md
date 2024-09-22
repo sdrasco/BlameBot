@@ -113,9 +113,12 @@ Reports are now minimialist, colorful, and save as both html with embedded image
 
 Each report ends with a pearl of wisdom inspired by your spending habits. Examples:
 
-   - ![Wisdom 1](SignOff1.png)
-   - ![Wisdom 2](SignOff2.png)
-   - ![Wisdom 3](SignOff3.png)
+![Wisdom 1](SignOff1.png)
+![Wisdom 2](SignOff2.png)
+![Wisdom 3](SignOff3.png)
+<img src="SignOff1.png" alt="Wisdom 1" width="300"/>
+<img src="SignOff2.png" alt="Wisdom 2" width="300"/>
+<img src="SignOff3.png" alt="Wisdom 3" width="300"/>
 
 ## Fun FAQs
 
