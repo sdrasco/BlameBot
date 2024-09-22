@@ -543,7 +543,8 @@ class AIClassifier:
         category_keywords = {
             'Travel': ['travel'],
             'Groceries': ['groceries'],
-            'Utilities': ['octopus', 'energy', 'doorstepglassrecycling', 'starlink internet', 'talktalk']
+            'Utilities': ['octopus', 'energy', 'doorstepglassrecycling', 'starlink internet', 'talktalk'],
+            'Alcohol': ['majestic', 'yapp', 'whisky', 'whiskey', 'yamazaki', 'beer', 'wine', 'gin', 'weisse', 'champagne', 'taitinger']
         }
 
         # Train FastText model on the descriptions
@@ -566,13 +567,10 @@ class AIClassifier:
                 if word in model.wv:
                     # Default weight is 1 for regular words
                     weight = 1  
-                    # Give extra weight to key words
-                    if word in category_keywords['Travel']:
-                        weight = 10
-                    elif word in category_keywords['Groceries']:
-                        weight = 10 
-                    elif word in category_keywords['Utilities']:
-                        weight = 10  
+                    # Loop through the category_keywords dictionary to give extra weight to keywords
+                    for category, keywords in category_keywords.items():
+                        if word in keywords:
+                            weight = 10  
                         
                     # Multiply the word vector by its weight
                     weighted_vectors.append(weight * model.wv[word])
