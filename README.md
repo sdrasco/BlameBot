@@ -103,13 +103,25 @@ To adapt BlameBot to your specific needs, you might consider the following custo
 
 ### Reports
 
-Reports are now minimialist, colorful, and save as both html with embedded images and as PDF files so colorful they'll blow your printing budget.  Here's are some examples, redacted to protect the reputation of the guilty:
+Reports are now minimialist, colorful, and save as both html with embedded images and as PDF files so colorful they'll blow your printing budget.  Here are examples, redacted to protect the reputation of the guilty:
 
-   - [Example Report](report1.html)
-   - [Another Example](report2.html)
-   - [Okay, but this is the last one](report3.html)
+   - [Example Report](report1.pdf)
+   - [Another Example](report2.pdf)
+   - [Okay, but this is the last one](report3.pdf)
+
+### Words of wisdom
+
+Each report ends with a pearl of wisdom inspired by your spending habits. Examples:
+
+   - ![Wisdom 1](SignOff1.png)
+   - ![Wisdom 2](SignOff2.png)
+   - ![Wisdom 3](SignOff3.png)
 
 ## Fun FAQs
+
+1. **Why are the reports different every time? Even the layout and colors change.**
+
+   - BlameBot is a creative entity that cannot be pinned down to one artistic style.
 
 1. **My report looks outlandish. The images are the size of the moon!  What gives?**
 
