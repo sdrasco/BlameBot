@@ -151,4 +151,4 @@ Contributions are welcome! If you have suggestions or improvements, please fork 
 
 ## Contact
 
-For any questions or suggestions, please contact [Steve Drasco](mailto:steve.drasco@gmail.com).
+For any questions or suggestions, please contact BlameBot's dad, [Steve Drasco](mailto:steve.drasco@gmail.com).
