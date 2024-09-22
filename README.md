@@ -141,7 +141,7 @@ Each report ends with a pearl of wisdom inspired by your spending habits. Exampl
 
 2. **Did your artist in residence make the adorable BlameBot logo?**
 
-   - No. As you might guess from financial wisdom, we couldn't afford a human artist. We outsourced that task to OpenAI's Dalle.
+   - No. As you might guess from the quality of our financial wisdom, we couldn't afford a human artist. We outsourced that task to OpenAI's Dalle.
 
 ## License
 
