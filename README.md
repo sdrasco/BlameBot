@@ -98,10 +98,15 @@ To adapt BlameBot to your specific needs, you might consider the following custo
 ## Example Outputs
 
 ### Word Cloud
-![Spending Categories Word Cloud](ShameCloud.png)
+<div align="center">
+  <img src="ShameCloud.png" alt="Spending Categories Word Cloud of Shame" width="600"/>
+</div>
 
 ### Monthly Expenditures
-![Monthly Expenditures Bar Chart](monthly.png)
+
+<div align="center">
+  <img src="monthly.png" alt="Monthly Expenditures Bar Chart (redacted)" width="600"/>
+</div>
 
 ### Reports
 
