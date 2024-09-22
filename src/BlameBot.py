@@ -5,18 +5,18 @@ import re
 import ast
 import json
 import openai
-import pandas as pd
-import numpy as np
+import hdbscan
 import base64
-from bs4 import BeautifulSoup
+import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+import yfinance as yf
+from bs4 import BeautifulSoup
 from glob import glob
 from gensim.models import FastText
-import hdbscan
 from sklearn.cluster import KMeans, DBSCAN
 from sklearn.preprocessing import StandardScaler
 from wordcloud import WordCloud
-import yfinance as yf
 from datetime import datetime, timedelta
 SEED = 846 # random seed
 
@@ -118,6 +118,34 @@ class AccountProcessor:
         # Convert the list of rows back into a DataFrame
         self.data = pd.DataFrame(new_rows)
 
+    def scale_amount(self):
+        # scale sale amounts to create the Amount_Scaled feature
+        scaler = StandardScaler()
+        self.data['Amount_Scaled'] = scaler.fit_transform(np.log1p(self.data['Amount']).values.reshape(-1, 1)) 
+
+    def process(self, DateCol, UK_style, DescriptionColumnNames):
+        """
+        Execute the complete processing sequence specific to UK bank statements.
+        """
+        # get and merge all the statements
+        self.load_and_validate_data()
+
+        # clean
+        self.clean_date(DateCol=DateCol, UK_style=UK_style)
+        self.clean_description(ColNames=DescriptionColumnNames)
+        self.clean_amount()
+        
+        # drop all the columns we don't need
+        columns_to_keep = ['Date', 'Description', 'Amount']
+        self.data = self.data[columns_to_keep]
+        return self.data
+
+        # Split large sales into more frequent multiple smaller ones
+        self.chop_up()
+
+        # scale sale amounts to create the Amount_Scaled feature
+        self.scale_amount()
+        
     def summarize(self):
         """
         Create a summary of the data.
@@ -145,28 +173,11 @@ class uk_bank(AccountProcessor):
         """
         super().__init__(data_directory)
 
-    def process(self):
-        """
-        Execute the complete processing sequence specific to UK bank statements.
-        """
-        # get and merge all the statements
-        self.load_and_validate_data()
-
-        # clean
-        self.clean_date(DateCol="Date", UK_style=True)
-        self.clean_description(ColNames=['Name', 'Address', 'Description'])
-        self.clean_amount()
-        
-        # drop all the columns we don't need
-        columns_to_keep = ['Date', 'Description', 'Amount', 'Amount_Scaled']
-        self.data = self.data[columns_to_keep]
-        return self.data
-
     def clean_amount(self):
         """
         Construct the Amount feature.
         
-        Make sales positive, convert to USD, and scale (standard scaling on log-transformed).
+        Make sales positive, convert to USD.
         
         Also split large events up into many smaller ones to boost their frequency. 
         This helps clustering find categories that are rare but significant in size.
@@ -187,14 +198,7 @@ class uk_bank(AccountProcessor):
                 self.converter.convert(row['Amount'], row['Date']) if row['Currency'] == 'GBP' else row['Amount'],
                 'USD' if row['Currency'] == 'GBP' else row['Currency']
             ]), axis=1
-        )
-        
-        # Split large sales into more frequent multiple smaller ones
-        self.chop_up()
-        
-        # scale sale amounts
-        scaler = StandardScaler()
-        self.data['Amount_Scaled'] = scaler.fit_transform(np.log1p(self.data['Amount']).values.reshape(-1, 1))  
+        ) 
 
 class CreditCardUS(AccountProcessor):
     def __init__(self, data_directory):
@@ -203,23 +207,6 @@ class CreditCardUS(AccountProcessor):
         """
         super().__init__(data_directory)
 
-    def process(self):
-        """
-        Execute the complete processing sequence specific to US credit card statements.
-        """
-        # get and merge all the statements
-        self.load_and_validate_data()
-
-        # clean
-        self.clean_date(DateCol = "Transaction Date", UK_style=False)
-        self.clean_description(ColNames=['Description'])
-        self.clean_amount()
-        
-        # drop all the columns we don't need
-        columns_to_keep = ['Date', 'Description', 'Amount', 'Amount_Scaled']
-        self.data = self.data[columns_to_keep]
-        return self.data    
-        
     def clean_amount(self):
         """
         Build Amount feature.
@@ -227,22 +214,12 @@ class CreditCardUS(AccountProcessor):
         Remove rows where the 'type' is 'Payment' or 'Reversal'.
         
         Make all sales positive.
-        
-        Also split large events up into many smaller ones to boost their frequency. 
-        This helps clustering find categories that are rare but significant in size.
         """
         # remove deposits or the like, and make sales positive
         deposit_mask = (self.data['Amount'] <= 0) & (self.data['Type'] != 'Reversal') & (self.data['Type'] != 'Payment')
         self.data = self.data[deposit_mask].copy()
         if 'Amount' in self.data.columns:
             self.data['Amount'] = self.data['Amount'].abs()
-
-        #Split large sales into more frequent multiple smaller ones
-        self.chop_up()
-        
-        # scale sale amounts
-        scaler = StandardScaler()
-        self.data['Amount_Scaled'] = scaler.fit_transform(np.log1p(self.data['Amount']).values.reshape(-1, 1))  
 
 class GBPtoUSD:
     def __init__(self, data_file='gbp_usd_daily_data.csv'):
@@ -787,11 +764,11 @@ amzn_directory = '../data/Amazon/'
 
 # Process the statements
 uscc = CreditCardUS(us_cc_directory)
-clean_uscc = uscc.process()
+clean_uscc = uscc.process(DateCol='Transaction Date', UK_style=False, DescriptionColumnNames=['Description'])
 print("\nUS credit card summary:\n")
 print(uscc.summarize())
 ukbank = uk_bank(uk_bank_directory)
-clean_ukbank = ukbank.process()
+clean_ukbank = ukbank.process(DateCol='Date', UK_style=True, DescriptionColumnNames=['Name', 'Address', 'Description'])
 print("\nUK bank account summary:\n")
 print(ukbank.summarize())
 
@@ -892,7 +869,7 @@ blamebot_base64 = convert_image_to_base64('BlameBot.png')
 
 
 prompt = f"""
-You are a sharp and highly paid wealth manager assembling a report for my family. You are humorless and wise.
+You are a sharp and highly paid wealth manager assembling a report for my family. You also quite funny with a tendancy to show off your dry witt.
 Based on the following financial summary and image descriptions, provide a detailed reflection and advice.
 
 Structure the report as follows:
@@ -1009,3 +986,4 @@ output_pdf = 'financial_report_redacted.pdf'
 pdfkit.from_file(input_html, output_pdf, options=options)
 
 print("PDF version of redacted report written to 'financial_report_redacted.pdf'.")
+
