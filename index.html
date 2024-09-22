@@ -16,6 +16,29 @@
 
         header {
             padding: 50px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo-text-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            max-width: 800px;
+        }
+
+        .logo-text-container img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .text-container {
+            text-align: left;
+            max-width: 500px;
         }
 
         h1 {
@@ -25,16 +48,12 @@
 
         p {
             font-size: 20px;
-            max-width: 800px;
-            margin: 0 auto 30px;
             line-height: 1.6;
         }
 
-        /* class for the smaller paragraph */
         .small-center {
             font-size: 16px;
             text-align: center;
-            max-width: 800px;
             margin: 10px auto 30px;
             line-height: 1.6;
         }
@@ -55,7 +74,7 @@
         }
 
         iframe {
-            width: 75%;
+            width: 90%;
             height: 600px;
             border: 1px solid #ccc;
             margin: 20px 0;
@@ -76,25 +95,29 @@
         /* Media query for smaller screens */
         @media (max-width: 600px) {
             h1 {
-                font-size: 32px; /* Further reduce header size */
+                font-size: 32px;
             }
 
             p, .small-center {
-                font-size: 18px; /* Adjust paragraph font size for better readability */
+                font-size: 18px;
             }
 
             a.button {
-                padding: 12px 24px; /* Slightly reduce padding */
-                font-size: 16px; /* Adjust font size */
-            }
-
-            h2 {
-                font-size: 28px;
+                padding: 12px 24px;
+                font-size: 16px;
             }
 
             iframe {
-                width: 100%; /* Full width for smaller screens */
+                width: 100%;
                 height: 400px;
+            }
+
+            .logo-text-container {
+                flex-direction: column;
+            }
+
+            .text-container {
+                text-align: center;
             }
         }
     </style>
@@ -102,15 +125,21 @@
 <body>
 
 <header>
-    <!-- BlameBot Logo -->
-    <img src="BlameBot.png" alt="BlameBot Logo" style="max-width:400px; height:auto;">
-    <p>AI that converts bank statements into word clouds of shame.</p> 
-    <p>Because you can't math and need more reasons to argue.</p>
-    <iframe src="https://blamebot.com/report1.html" title="Example Report"></iframe>
-    <p class="small-center">Currently in alpha. Requires Python proficiency to use.</p>
-    <a href="https://github.com/sdrasco/BlameBot/blob/main/README.md" class="button">Tell me more about this</a>
-    <a href="https://github.com/sdrasco/BlameBot/blob/main/src/BlameBot.py" class="button">View source code</a>
+    <div class="logo-text-container">
+        <img src="BlameBot.png" alt="BlameBot Logo">
+        <div class="text-container">
+            <p>AI that converts bank statements into reports with word clouds of shame.</p> 
+            <p>Because you can't math and need more reasons to argue.</p>
+        </div>
+    </div>
 </header>
+
+<!-- Report Section -->
+<iframe src="https://blamebot.com/report1.html" title="Example Report"></iframe>
+
+<a href="https://github.com/sdrasco/BlameBot/blob/main/README.md" class="button">Tell me more about this</a>
+<a href="https://github.com/sdrasco/BlameBot/blob/main/src/BlameBot.py" class="button">View source code</a>
+<p class="small-center">Currently in alpha. Requires Python proficiency to use.</p>
 
 <footer>
     <p>&copy; 2024 BlameBot. All rights reserved. | <a href="mailto:steve.drasco@gmail.com">Contact</a></p>
