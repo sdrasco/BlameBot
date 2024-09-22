@@ -32,15 +32,23 @@ To run BlameBot, you will need:
 
 ### Installation
 
-1. Clone the repository:
+Before running the Python code, ensure you have the following dependencies installed.
+
+1. System Dependency (macOS):
+    ```
+    bash
+    brew reinstall wkhtmltopdf
+    ```
+    
+2. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/BlameBot.git
    ```
-2. Navigate to the project directory:
+3. Navigate to the project directory:
    ```bash
    cd BlameBot
    ```
-3. Install the required Python packages:
+4. Install the required Python packages:
    ```bash
    pip install -r requirements.txt
    ```
