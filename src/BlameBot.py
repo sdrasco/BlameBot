@@ -603,7 +603,7 @@ class AIClassifier:
         combined_features.columns = combined_features.columns.astype(str)
 
         # Apply HDBSCAN Clustering
-        clusterer = hdbscan.HDBSCAN(min_cluster_size=15, min_samples=4)  
+        clusterer = hdbscan.HDBSCAN(min_cluster_size=10, min_samples=4)  
 
         # Apply DBSCAN Clustering (alternative to HDBSCAN)
         # clusterer = DBSCAN(eps=0.045, min_samples=3)  # Adjust eps based on your data
@@ -910,8 +910,8 @@ Structure the report as follows:
 3. **Projections for Annual Costs**
    - Based on current spending trends, provide projections for annual costs. Consider factors such as potential inflation, lifestyle changes, or other likely cost changes.
    
-4. **Suggested Annual Budget by Category**
-   - Propose a more concise annual budget, consolidating spending categories if necessary.
+4. **Suggested Budget by Category**
+   - Propose a more concise annual, monthly, and weekly budget, consolidating spending categories if necessary.
 
 6. **Sustainability Outline**
    - Provide an assessment of the income needed to sustain the suggested budget, including pre- and post-tax amounts, stating the assumed tax rates.
