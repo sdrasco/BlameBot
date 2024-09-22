@@ -602,39 +602,21 @@ class AIClassifier:
         # Convert all column names to strings to ensure compatibility with HDDBSCAN
         combined_features.columns = combined_features.columns.astype(str)
 
-        #
-        # HDBSCAN
-        #
-        # Apply HDBSCAN Clustering and add Cluster Labels to the Original DataFrame
-        clusterer = hdbscan.HDBSCAN(
-            min_cluster_size=15, 
-            min_samples=4,
-            cluster_selection_method='eom'
-        )  
+        # Apply HDBSCAN Clustering
+        clusterer = hdbscan.HDBSCAN(min_cluster_size=15, min_samples=4)  
+
+        # Apply DBSCAN Clustering (alternative to HDBSCAN)
+        # clusterer = DBSCAN(eps=0.045, min_samples=3)  # Adjust eps based on your data
+
+        # Apply KMEANS Clustering (alternative to HDBSCAN)
+        # clusterer = KMeans(n_clusters=30, n_init='auto', random_state=SEED)
+
+        # add Cluster Labels
         cluster_labels = clusterer.fit_predict(combined_features)
         self.data['Cluster_Label'] = cluster_labels
 
         # Apply post-clustering rules to force certain keywords into predefined categories
         self.data = apply_post_clustering_rules(self.data, category_keywords)
-
-        #
-        # DBSCAN (alternative to HDBSCAN)
-        #
-        # Apply DBSCAN Clustering and add Cluster Labels to the Original DataFrame
-        # clusterer = DBSCAN(eps=0.045, min_samples=3)  # Adjust eps based on your data
-        # cluster_labels = clusterer.fit_predict(combined_features)
-        # self.data['Cluster_Label'] = cluster_labels
-
-        #
-        # KMEANS (alternative to HDBSCAN)
-        #
-        # # Set the number of clusters. This needs to be specified manually for KMeans, unlike HDBSCAN.
-        # n_clusters = 30  # Adjust this number based on your needs or after evaluating your data
-        #
-        # # Apply KMeans Clustering and add Cluster Labels to the Original DataFrame
-        # clusterer = KMeans(n_clusters=n_clusters, n_init='auto', random_state=SEED)
-        # cluster_labels = clusterer.fit_predict(combined_features)
-        # self.data['Cluster_Label'] = cluster_labels
 
         # Create crude set of new cluster names from the FastText model
         crude_names = {}
