@@ -1,16 +1,11 @@
-
 # Core Dependencies
-pandas>=1.0.0
-numpy>=1.18.0
-matplotlib>=3.0.0
-scikit-learn>=0.22.0
-hdbscan>=0.8.27
-gensim>=4.0.0
-openai>=0.27.0
-wordcloud>=1.8.0
-yfinance>=0.1.70
-
-# For LaTeX Compilation (Optional)
-# These are command-line tools and are typically installed separately, 
-# not via pip, so they're listed here for reference:
-# - pdflatex (part of TeX Live or MiKTeX distributions)
+pandas==1.5.3
+numpy==1.24.2
+beautifulsoup4
+matplotlib
+gensim==4.3.3
+hdbscan
+scikit-learn==1.2.1
+wordcloud==1.9.3
+yfinance==0.2.43
+openai
