@@ -596,27 +596,6 @@ class AIClassifier:
             
             return data
 
-        # # Train FastText model on the descriptions
-        # sentences = [desc.split() for desc in self.data['Description'].values]
-        # model = FastText(
-        #     sentences, 
-        #     vector_size=100, 
-        #     window=3, 
-        #     min_count=2, 
-        #     workers=8,
-        #     seed=SEED
-        # )  # Adjust parameters as needed
-        
-        # # Create sentence vectors by averaging word vectors
-        # def get_sentence_vector(sentence):
-        #     words = sentence.split()
-        #     vectors = [model.wv[word] for word in words if word in model.wv]
-        #     return np.mean(vectors, axis=0) if vectors else np.zeros(model.vector_size)
-        
-        # # Apply vectorization to the descriptions
-        # self.data['FastText_Vector'] = self.data['Description'].apply(get_sentence_vector)
-        # vector_df = pd.DataFrame(self.data['FastText_Vector'].tolist(), index=self.data.index)
-
         # Combine vectorized descriptions with scaled amounts
         combined_features = pd.concat([vector_df, self.data[['Amount_Scaled']]], axis=1).fillna(0)
 
