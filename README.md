@@ -1,7 +1,9 @@
 
 # BlameBot: AI Overlord Family Finance Tool Because You Can't Math and Need More Reasons to Argue
 
-![BlameBot Icon](BlameBot.png)
+<div align="center">
+  <img src="BlameBot.png" alt="BlameBot logo" width="300"/>
+</div>
 
 BlameBot is a Python-based tool designed to help families analyze their financial data using advanced AI techniques like ChatGPT, Natural Language Processing (NLP), and clustering. It processes financial statements from various sources, unifies the data, and generates insightful reports to better understand spending habits. And yes, it might just give you more reasons to argue.
 
@@ -113,12 +115,15 @@ Reports are now minimialist, colorful, and save as both html with embedded image
 
 Each report ends with a pearl of wisdom inspired by your spending habits. Examples:
 
-![Wisdom 1](SignOff1.png)
-![Wisdom 2](SignOff2.png)
-![Wisdom 3](SignOff3.png)
-<img src="SignOff1.png" alt="Wisdom 1" width="300"/>
-<img src="SignOff2.png" alt="Wisdom 2" width="300"/>
-<img src="SignOff3.png" alt="Wisdom 3" width="300"/>
+<div align="center">
+  <img src="SignOff1.png" alt="Wisdom 1" width="500"/>
+</div>
+<div align="center">
+  <img src="SignOff2.png" alt="Wisdom 2" width="500"/>
+</div>
+<div align="center">
+  <img src="SignOff3.png" alt="Wisdom 3" width="500"/>
+</div>
 
 ## Fun FAQs
 
