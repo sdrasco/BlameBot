@@ -541,10 +541,10 @@ class AIClassifier:
 
         # Define custom keywords for important categories
         category_keywords = {
-            'Travel': ['travel'],
-            'Groceries': ['groceries'],
-            'Utilities': ['octopus', 'energy', 'doorstepglassrecycling', 'starlink', 'talktalk'],
-            'Alcohol': ['majestic', 'yapp', 'whisky', 'whiskey', 'yamazaki', 'beer', 'wine', 'gin', 'weisse', 'champagne', 'taitinger']
+            'travel': ['travel'],
+            'groceries': ['groceries'],
+            'utilities': ['octopus', 'energy', 'doorstepglassrecycling', 'starlink', 'talktalk'],
+            'booze': ['majestic', 'yapp', 'whisky', 'whiskey', 'yamazaki', 'beer', 'wine', 'gin', 'weisse', 'champagne', 'taitinger']
         }
 
         # Train FastText model on the descriptions
@@ -614,7 +614,7 @@ class AIClassifier:
         self.data['Cluster_Label'] = cluster_labels
 
         # Apply post-clustering rules to force certain keywords into predefined categories
-        self.data = apply_post_clustering_rules(self.data, category_keywords)
+        #self.data = apply_post_clustering_rules(self.data, category_keywords)
 
         # Create crude set of new cluster names from the FastText model
         crude_names = {}
@@ -666,7 +666,8 @@ class AIClassifier:
                 "Create concise and intuitive budget category names for each cluster. "
                 "Output the results as a Python dictionary, where each key is the cluster number and each value is the category name, in the format: "
                 "{-1: 'category name', 0: 'another category name', ...}. Only output the dictionary in this format "
-                "without any extra text. Do not use the word Retail. Do not use the word Services. Do not use the word Bills."
+                "without any extra text. Do not use the word Retail. Do not use the word Shoping. Do not use the word Services. Do not use the word Bills. Most importantly,"
+                "try to keep the category names concise as they will be going into a word cloud with limited space."
             )
 
             # Call the OpenAI API (use mini if the prompt is small)
@@ -909,7 +910,7 @@ Structure the report as follows:
    - Based on current spending trends, provide projections for annual costs. Consider factors such as potential inflation, lifestyle changes, or other likely cost changes.
    
 4. **Suggested Budget by Category**
-   - Propose a more concise annual, monthly, and weekly budget, consolidating spending categories if necessary.
+   - Propose a more concise annual and weekly budget, consolidating spending categories if necessary.
 
 6. **Sustainability Outline**
    - Provide an assessment of the income needed to sustain the suggested budget, including pre- and post-tax amounts, stating the assumed tax rates.
@@ -922,7 +923,8 @@ that links to https://blamebot.com/ when clicked. To the right of the image put 
 
 ### Design Guidelines:
 - Use a minimalist, modern layout similar to the style of Google Fi or Octopus Energy bills (e.g. boxes should have rounded corners)
-- All content should be confined to the central 75% of the screen width.  All tables should fit within their boxes.
+- All content should be confined to the central 80% of the screen width.  
+- All tables should be sized to fit within the boxes around them.
 - Image sizes should be constrained to fit within their contexts
 - Incorporate clean, large headers, and concise sections with ample white space.
 - For the "Summary" section, use a simple table with clean borders.
