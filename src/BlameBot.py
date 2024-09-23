@@ -543,7 +543,7 @@ class AIClassifier:
         category_keywords = {
             'Travel': ['travel'],
             'Groceries': ['groceries'],
-            'Utilities': ['octopus', 'energy', 'doorstepglassrecycling', 'starlink internet', 'talktalk'],
+            'Utilities': ['octopus', 'energy', 'doorstepglassrecycling', 'starlink', 'talktalk'],
             'Alcohol': ['majestic', 'yapp', 'whisky', 'whiskey', 'yamazaki', 'beer', 'wine', 'gin', 'weisse', 'champagne', 'taitinger']
         }
 
@@ -601,7 +601,7 @@ class AIClassifier:
         combined_features.columns = combined_features.columns.astype(str)
 
         # Apply HDBSCAN Clustering
-        clusterer = hdbscan.HDBSCAN(min_cluster_size=10, min_samples=4)  
+        clusterer = hdbscan.HDBSCAN(min_cluster_size=12, min_samples=3)  
 
         # Apply DBSCAN Clustering (alternative to HDBSCAN)
         # clusterer = DBSCAN(eps=0.045, min_samples=3)  # Adjust eps based on your data
@@ -922,7 +922,7 @@ that links to https://blamebot.com/ when clicked. To the right of the image put 
 
 ### Design Guidelines:
 - Use a minimalist, modern layout similar to the style of Google Fi or Octopus Energy bills (e.g. boxes should have rounded corners)
-- All content should be confined to the central 60% of the screen width.  All tables should fit within their boxes.
+- All content should be confined to the central 75% of the screen width.  All tables should fit within their boxes.
 - Image sizes should be constrained to fit within their contexts
 - Incorporate clean, large headers, and concise sections with ample white space.
 - For the "Summary" section, use a simple table with clean borders.
@@ -936,7 +936,7 @@ that links to https://blamebot.com/ when clicked. To the right of the image put 
 - Provide the HTML code **without any markdown or code block formatting** (e.g., no ```html or ``` around the code).
 - Use appropriate HTML5 elements (`<section>`, `<header>`, `<table>`, etc.) to structure the document.
 - Include basic inline CSS for layout and typography. Focus on minimalism and readability.
-- The images ('shame_cloud.png' and 'monthly_sums.png') should be referenced with `<img>` tags.
+- The images ('shame_cloud.png' and 'monthly_sums.png') should be referenced with `<img>` tags and with appropriately constrained sizes.
 - All text should be wrapped in `<p>`, `<h1>`, `<h2>`, or `<div>` tags, ensuring proper hierarchy.
 
 Please generate the report as a single HTML document with embedded CSS. **Do not include any additional text at all outside of the HTML code.**
@@ -1004,4 +1004,3 @@ output_pdf = 'financial_report_redacted.pdf'
 pdfkit.from_file(input_html, output_pdf, options=options)
 
 print("PDF version of redacted report written to 'financial_report_redacted.pdf'.")
-
