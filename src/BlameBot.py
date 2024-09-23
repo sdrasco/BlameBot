@@ -7,6 +7,7 @@ import json
 import openai
 import hdbscan
 import base64
+import pdfkit
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -541,7 +542,7 @@ class AIClassifier:
 
         # Define custom keywords for important categories
         category_keywords = {
-            'travel': ['travel'],
+            'travel': ['travel', 'hotel', 'klm', 'airline'],
             'groceries': ['groceries'],
             'utilities': ['octopus', 'energy', 'doorstepglassrecycling', 'starlink', 'talktalk'],
             'booze': ['majestic', 'yapp', 'whisky', 'whiskey', 'yamazaki', 'beer', 'wine', 'gin', 'weisse', 'champagne', 'taitinger']
@@ -551,9 +552,9 @@ class AIClassifier:
         sentences = [desc.split() for desc in self.data['Description'].values]
         model = FastText(
             sentences, 
-            vector_size=100, 
-            window=3, 
-            min_count=2, 
+            vector_size=50, 
+            window=2, 
+            min_count=1, 
             workers=8,
             seed=SEED
         )  # Adjust parameters as needed
@@ -570,7 +571,8 @@ class AIClassifier:
                     # Loop through the category_keywords dictionary to give extra weight to keywords
                     for category, keywords in category_keywords.items():
                         if word in keywords:
-                            weight = 10  
+                            weight = 10
+                            sentence_weight = 10
                         
                     # Multiply the word vector by its weight
                     weighted_vectors.append(weight * model.wv[word])
@@ -584,14 +586,9 @@ class AIClassifier:
 
         # make some post-clustering rules as a backup plan for getting keywords where we want them
         def apply_post_clustering_rules(data, category_keywords):
-            
-            # Loop through each category and its associated keywords
             for category, keywords in category_keywords.items():
-                # Create a mask to find rows containing any of the keywords
                 keyword_mask = data['Description'].str.contains('|'.join(keywords), case=False)
-                # Assign the category to rows that match the keywords
-                data.loc[keyword_mask, 'Category'] = category
-            
+                data.loc[keyword_mask, 'Category'] = category  # Override previous category
             return data
 
         # Combine vectorized descriptions with scaled amounts
@@ -604,17 +601,19 @@ class AIClassifier:
         clusterer = hdbscan.HDBSCAN(min_cluster_size=12, min_samples=3)  
 
         # Apply DBSCAN Clustering (alternative to HDBSCAN)
-        # clusterer = DBSCAN(eps=0.045, min_samples=3)  # Adjust eps based on your data
+        #clusterer = DBSCAN(eps=0.045, min_samples=3)  # Adjust eps based on your data
 
         # Apply KMEANS Clustering (alternative to HDBSCAN)
         # clusterer = KMeans(n_clusters=30, n_init='auto', random_state=SEED)
 
-        # add Cluster Labels
+        # get cluster labels
         cluster_labels = clusterer.fit_predict(combined_features)
-        self.data['Cluster_Label'] = cluster_labels
 
         # Apply post-clustering rules to force certain keywords into predefined categories
-        #self.data = apply_post_clustering_rules(self.data, category_keywords)
+        self.data = apply_post_clustering_rules(self.data, category_keywords)
+
+        # apply cluster labels
+        self.data['Cluster_Label'] = cluster_labels
 
         # Create crude set of new cluster names from the FastText model
         crude_names = {}
@@ -659,16 +658,35 @@ class AIClassifier:
             """
             openai.api_key = os.getenv("OPENAI_API_KEY")
 
-            # Define the prompt to clarify category names (edit to your liking)
+            # Define the prompt to clarify category names
             prompt = (
-                "Given the following cluster descriptions:\n\n"
+                "You are a financial expert tasked with refining budget category names for different clusters of transactions. "
+                "The following are descriptions of the transaction clusters:\n\n"
                 f"{crude_names}\n\n"
-                "Create concise and intuitive budget category names for each cluster. "
-                "Output the results as a Python dictionary, where each key is the cluster number and each value is the category name, in the format: "
-                "{-1: 'category name', 0: 'another category name', ...}. Only output the dictionary in this format "
-                "without any extra text. Do not use the word Retail. Do not use the word Shoping. Do not use the word Services. Do not use the word Bills. Most importantly,"
-                "try to keep the category names concise as they will be going into a word cloud with limited space."
+                "Your job is to generate concise, intuitive, and meaningful category names for each cluster. "
+                "Each name should clearly reflect the type of spending represented by the transactions. "
+                "Please follow these guidelines:\n"
+                "- Each category name should be a maximum of two to three words.\n"
+                "- Avoid generic terms such as 'General', 'Retail', 'Shopping', 'Services', or 'Bills'.\n"
+                "- Do not repeat category names, or even parts of category names, unless absolutely necessary.\n"
+                "- The names should be short enough to fit in a word cloud (i.e., succinct and clear).\n"
+                "- Focus on clarity and specificity, making sure the names are easy to understand.\n"
+                "- Ensure the names are distinct from each other.\n\n"
+                "Output the results in a Python dictionary format, where each key is the cluster number and each value is the category name, like this:\n"
+                "{-1: 'category name', 0: 'another category name', ...}. "
+                "Provide only the dictionary in the output, without any additional text."
             )
+
+            # # Define the prompt to clarify category names (edit to your liking)
+            # prompt = (
+            #     "Given the following cluster descriptions:\n\n"
+            #     f"{crude_names}\n\n"
+            #     "Create concise and intuitive budget category names for each cluster. "
+            #     "Output the results as a Python dictionary, where each key is the cluster number and each value is the category name, in the format: "
+            #     "{-1: 'category name', 0: 'another category name', ...}. Only output the dictionary in this format "
+            #     "without any extra text. Do not use the word Retail. Do not use the word Shoping. Do not use the word Services. Do not use the word Bills. Most importantly,"
+            #     "try to keep the category names concise as they will be going into a word cloud with limited space."
+            # )
 
             # Call the OpenAI API (use mini if the prompt is small)
             #response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
@@ -776,6 +794,191 @@ def shame_cloud(classifier_data, exclude_category=None, output_file=None):
     # close the word cloud
     plt.close()
 
+def build_reports(data):
+
+    # Convert 'Date' column to datetime if it's not already
+    data['Date'] = pd.to_datetime(data['Date'])
+
+    # Create a 'Month' column formatted as 'YYYY-MM'
+    data['Month'] = data['Date'].dt.to_period('M')
+
+    # Group by 'Month' and sum 'Amount'
+    monthly_sums = data.groupby('Month')['Amount'].sum()
+
+    # Reset index to ensure 'Month' is a column for plotting
+    monthly_sums = monthly_sums.reset_index()
+
+    # Convert 'Month' back to string for better plotting labels
+    monthly_sums['Month'] = monthly_sums['Month'].astype(str)
+
+    # Save bar chart 
+    plt.figure(figsize=(12, 6))
+    plt.bar(monthly_sums['Month'], monthly_sums['Amount'], color='skyblue')
+    #plt.ylabel('USD')
+    plt.yticks([])  # This removes the tick labels
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig('monthly_sums.png', dpi=300, bbox_inches='tight')
+    # Close the figure to avoid displaying it
+    plt.close()
+
+    # Calculate total and average spending
+    total_spending = data['Amount'].sum()
+    average_monthly_spending = monthly_sums['Amount'].mean()
+    highest_spending_month = monthly_sums.loc[monthly_sums['Amount'].idxmax(), 'Month']
+
+    # Identify top expense categories
+    top_categories = data['Category'].value_counts().head(5).index.tolist()
+
+    # Group by 'Category' and sum the 'Amount' for each category
+    category_sums = classified.data.groupby('Category')['Amount'].sum()
+    category_sums = category_sums.sort_values(ascending=False)
+
+    # Calculate the number of days covered
+    num_days = (data['Date'].max() - data['Date'].min()).days + 1  # Include both start and end dates
+
+    # Prepare summary dictionary
+    data_summary = {
+        'Number of days covered': f"{num_days}",
+        'Total Spending': f"${total_spending:,.2f}",
+        'Average Monthly Spending': f"${average_monthly_spending:,.2f}",
+        'Highest Spending Month': highest_spending_month,
+        'Top Expense Categories': ', '.join(top_categories),
+        'Spending per Category': category_sums
+    }
+
+
+    # convert images to base64 so that we can imbed them in the reports
+    def convert_image_to_base64(image_path):
+        """Converts an image to a Base64 encoded string."""
+        with open(image_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+        return encoded_string
+
+    # Base64 encoded images
+    monthly_sums_base64 = convert_image_to_base64('monthly_sums.png')
+    shame_cloud_base64 = convert_image_to_base64('shame_cloud.png')
+    blamebot_base64 = convert_image_to_base64('BlameBot.png')
+
+
+    prompt = f"""
+    You are a sharp and highly paid wealth manager assembling a report for my family. You also quite funny. 
+    Based on the following financial summary and image descriptions, provide a detailed reflection and advice, oh and do show off your dry witt in your report.
+
+    Structure the report as follows:
+
+    1. **Summary of Data Used**
+       - Include these basic statistics, but possibly others you think relevant.
+       Summary:
+       - Date Range: {data_summary['Number of days covered']} days
+       - Total Spending: {data_summary['Total Spending']}
+       - Average Monthly Spending: {data_summary['Average Monthly Spending']}
+       - Highest Spending Month: {data_summary['Highest Spending Month']}
+       - Spending per Category: {data_summary['Spending per Category']} (no need to show all categories)
+
+    2. **Monthly Spending and Word Cloud**
+       - Reference and explain both the monthly spending image ('monthly_sums.png') and the word cloud ('shame_cloud.png').
+       - Discuss trends visible in these images and any important outliers.
+
+    3. **Projections for Annual Costs**
+       - Based on current spending trends, provide projections for annual costs. Consider factors such as potential inflation, lifestyle changes, or other likely cost changes.
+       
+    4. **Suggested Budget by Category**
+       - Propose a more concise annual and weekly budget, consolidating spending categories if necessary.
+
+    6. **Sustainability Outline**
+       - Provide an assessment of the income needed to sustain the suggested budget, including pre- and post-tax amounts, stating the assumed tax rates.
+
+    7. **Sustainability with Investment Income**
+       - Include a second sustainability assessment assuming a combination of employment income and investment income from approximately $2,000,000 USD invested in securities with medium risk. Consider realistic returns on investment and how this affects the income needed to meet the proposed budget.
+
+    End the report with a footer made of the logo 'BlameBot.png' (an image of a robot) constrained to about an inch or two on a typical screen size 
+    that links to https://blamebot.com/ when clicked. To the right of the image put extremely funny self depricating words of family finance wisdom in a dry-humor style.
+
+    ### Design Guidelines:
+    - Use a minimalist, modern layout similar to the style of Google Fi or Octopus Energy bills (e.g. boxes should have rounded corners)
+    - All content should be confined to the central 80% of the screen width.  
+    - All tables should be sized to fit within the boxes around them.
+    - Image sizes should be constrained to fit within their contexts
+    - Incorporate clean, large headers, and concise sections with ample white space.
+    - For the "Summary" section, use a simple table with clean borders.
+    - The "Monthly Spending and Word Cloud" section should include large, centered images with explanatory text below them.
+    - Use **bold headings** and well-spaced paragraphs for clarity.
+    - Ensure all numbers (such as amounts) are formatted appropriately (e.g., currency with commas and two decimal places).
+    - Color scheme: Background should be a soft orange, Boxes should be a soft light blue, headers should be a soft red. Text should be a soft black.  The report should be colorful, but the colors should be subtle and calming.
+    - **No repetition of the summary or images verbatim**, and use your own discretion in explaining the data.
+
+    ### HTML Output Requirements:
+    - Provide the HTML code **without any markdown or code block formatting** (e.g., no ```html or ``` around the code).
+    - Use appropriate HTML5 elements (`<section>`, `<header>`, `<table>`, etc.) to structure the document.
+    - Include basic inline CSS for layout and typography. Focus on minimalism and readability.
+    - The images ('shame_cloud.png' and 'monthly_sums.png') should be referenced with `<img>` tags and with appropriately constrained sizes.
+    - All text should be wrapped in `<p>`, `<h1>`, `<h2>`, or `<div>` tags, ensuring proper hierarchy.
+
+    Please generate the report as a single HTML document with embedded CSS. **Do not include any additional text at all outside of the HTML code.**
+    """
+
+    # Generate advice using OpenAI's GPT-4o
+    response = openai.ChatCompletion.create(
+        model='gpt-4o',
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7
+    )
+
+    # Extract the generated HTML code
+    advice = response.choices[0].message['content'].strip()
+
+    # Modify HTML to embed images as Base64
+    advice = advice.replace('src="monthly_sums.png"', f'src="data:image/png;base64,{monthly_sums_base64}"')
+    advice = advice.replace('src="shame_cloud.png"', f'src="data:image/png;base64,{shame_cloud_base64}"')
+    advice = advice.replace('src="BlameBot.png"', f'src="data:image/png;base64,{blamebot_base64}"')
+
+    # Write the HTML code to a .html file
+    with open('financial_report.html', 'w') as file:
+        file.write(advice)
+
+    print("Report written to 'financial_report.html'.")
+
+    # Path to your HTML file and desired output PDF
+    input_html = 'financial_report.html'
+    output_pdf = 'financial_report.pdf'
+    options = {
+        'enable-local-file-access': ''
+    }
+    pdfkit.from_file(input_html, output_pdf, options=options)
+
+    print("PDF version of report written to 'financial_report.pdf'.")
+
+    # Load the HTML file content
+    with open("financial_report.html", "r") as file:
+        content = file.read()
+
+    # Parse the HTML content
+    soup = BeautifulSoup(content, "html.parser")
+
+    # Redact dollar amounts
+    for td in soup.find_all("td"):
+        if "$" in td.text:
+            td.string = "[REDACTED]"
+
+    # Redact dollar amounts from paragraphs in the document as well
+    for p in soup.find_all("p"):
+        p.string = re.sub(r"\$\d+(?:,\d{3})*(?:\.\d{2})?", "[REDACTED]", p.text)
+
+    # Save the modified content to a new HTML file
+    output_path = "financial_report_redacted.html"
+    with open(output_path, "w") as file:
+        file.write(str(soup))
+
+    print("Redacted report written to 'financial_report_redacted.html'.")
+
+    # Path to your HTML file and desired output PDF
+    input_html = 'financial_report_redacted.html'
+    output_pdf = 'financial_report_redacted.pdf'
+    pdfkit.from_file(input_html, output_pdf, options=options)
+
+    print("PDF version of redacted report written to 'financial_report_redacted.pdf'.")
+
 # Set the statement directories
 us_cc_directory = '../data/us_credit_card_statements/'
 uk_bank_directory = '../data/uk_bank_statements/'
@@ -820,189 +1023,8 @@ category_sums = category_sums.sort_values(ascending=False)
 pd.set_option('display.max_rows', None)
 print(f"\nCategory totals:\n{category_sums}\n")
 
-data = classified.data
-
-# Convert 'Date' column to datetime if it's not already
-data['Date'] = pd.to_datetime(data['Date'])
-
-# Create a 'Month' column formatted as 'YYYY-MM'
-data['Month'] = data['Date'].dt.to_period('M')
-
-# Group by 'Month' and sum 'Amount'
-monthly_sums = data.groupby('Month')['Amount'].sum()
-
-# Reset index to ensure 'Month' is a column for plotting
-monthly_sums = monthly_sums.reset_index()
-
-# Convert 'Month' back to string for better plotting labels
-monthly_sums['Month'] = monthly_sums['Month'].astype(str)
-
-# Save bar chart. I prefer the style above, but saving it to file is an elaborate process.
-plt.figure(figsize=(12, 6))
-plt.bar(monthly_sums['Month'], monthly_sums['Amount'], color='skyblue')
-#plt.ylabel('USD')
-plt.yticks([])  # This removes the tick labels
-plt.xticks(rotation=45)
-plt.tight_layout()
-plt.savefig('monthly_sums.png', dpi=300, bbox_inches='tight')
-# Close the figure to avoid displaying it
-plt.close()
-
-# Calculate total and average spending
-total_spending = data['Amount'].sum()
-average_monthly_spending = monthly_sums['Amount'].mean()
-highest_spending_month = monthly_sums.loc[monthly_sums['Amount'].idxmax(), 'Month']
-
-# Identify top expense categories
-top_categories = data['Category'].value_counts().head(5).index.tolist()
-
-# Group by 'Category' and sum the 'Amount' for each category
-category_sums = classified.data.groupby('Category')['Amount'].sum()
-category_sums = category_sums.sort_values(ascending=False)
-
-# Calculate the number of days covered
-num_days = (data['Date'].max() - data['Date'].min()).days + 1  # Include both start and end dates
-
-# Prepare summary dictionary
-data_summary = {
-    'Number of days covered': f"{num_days}",
-    'Total Spending': f"${total_spending:,.2f}",
-    'Average Monthly Spending': f"${average_monthly_spending:,.2f}",
-    'Highest Spending Month': highest_spending_month,
-    'Top Expense Categories': ', '.join(top_categories),
-    'Spending per Category': category_sums
-}
+# make the reports
+build_reports(classified.data)
 
 
-# convert images to base64 so that we can imbed them in the reports
-def convert_image_to_base64(image_path):
-    """Converts an image to a Base64 encoded string."""
-    with open(image_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-    return encoded_string
 
-# Base64 encoded images
-monthly_sums_base64 = convert_image_to_base64('monthly_sums.png')
-shame_cloud_base64 = convert_image_to_base64('shame_cloud.png')
-blamebot_base64 = convert_image_to_base64('BlameBot.png')
-
-
-prompt = f"""
-You are a sharp and highly paid wealth manager assembling a report for my family. You also quite funny. 
-Based on the following financial summary and image descriptions, provide a detailed reflection and advice, oh and do show off your dry witt in your report.
-
-Structure the report as follows:
-
-1. **Summary of Data Used**
-   - Include these basic statistics, but possibly others you think relevant.
-   Summary:
-   - Date Range: {data_summary['Number of days covered']} days
-   - Total Spending: {data_summary['Total Spending']}
-   - Average Monthly Spending: {data_summary['Average Monthly Spending']}
-   - Highest Spending Month: {data_summary['Highest Spending Month']}
-   - Spending per Category: {data_summary['Spending per Category']} (no need to show all categories)
-
-2. **Monthly Spending and Word Cloud**
-   - Reference and explain both the monthly spending image ('monthly_sums.png') and the word cloud ('shame_cloud.png').
-   - Discuss trends visible in these images and any important outliers.
-
-3. **Projections for Annual Costs**
-   - Based on current spending trends, provide projections for annual costs. Consider factors such as potential inflation, lifestyle changes, or other likely cost changes.
-   
-4. **Suggested Budget by Category**
-   - Propose a more concise annual and weekly budget, consolidating spending categories if necessary.
-
-6. **Sustainability Outline**
-   - Provide an assessment of the income needed to sustain the suggested budget, including pre- and post-tax amounts, stating the assumed tax rates.
-
-7. **Sustainability with Investment Income**
-   - Include a second sustainability assessment assuming a combination of employment income and investment income from approximately $2,000,000 USD invested in securities with medium risk. Consider realistic returns on investment and how this affects the income needed to meet the proposed budget.
-
-End the report with a footer made of the logo 'BlameBot.png' (an image of a robot) constrained to about an inch or two on a typical screen size 
-that links to https://blamebot.com/ when clicked. To the right of the image put extremely funny self depricating words of family finance wisdom in a dry-humor style.
-
-### Design Guidelines:
-- Use a minimalist, modern layout similar to the style of Google Fi or Octopus Energy bills (e.g. boxes should have rounded corners)
-- All content should be confined to the central 80% of the screen width.  
-- All tables should be sized to fit within the boxes around them.
-- Image sizes should be constrained to fit within their contexts
-- Incorporate clean, large headers, and concise sections with ample white space.
-- For the "Summary" section, use a simple table with clean borders.
-- The "Monthly Spending and Word Cloud" section should include large, centered images with explanatory text below them.
-- Use **bold headings** and well-spaced paragraphs for clarity.
-- Ensure all numbers (such as amounts) are formatted appropriately (e.g., currency with commas and two decimal places).
-- Color scheme: Background should be a soft orange, Boxes should be a soft light blue, headers should be a soft red. Text should be a soft black.  The report should be colorful, but the colors should be subtle and calming.
-- **No repetition of the summary or images verbatim**, and use your own discretion in explaining the data.
-
-### HTML Output Requirements:
-- Provide the HTML code **without any markdown or code block formatting** (e.g., no ```html or ``` around the code).
-- Use appropriate HTML5 elements (`<section>`, `<header>`, `<table>`, etc.) to structure the document.
-- Include basic inline CSS for layout and typography. Focus on minimalism and readability.
-- The images ('shame_cloud.png' and 'monthly_sums.png') should be referenced with `<img>` tags and with appropriately constrained sizes.
-- All text should be wrapped in `<p>`, `<h1>`, `<h2>`, or `<div>` tags, ensuring proper hierarchy.
-
-Please generate the report as a single HTML document with embedded CSS. **Do not include any additional text at all outside of the HTML code.**
-"""
-
-# Generate advice using OpenAI's GPT-4o
-response = openai.ChatCompletion.create(
-    model='gpt-4o',
-    messages=[{"role": "user", "content": prompt}],
-    temperature=0.7
-)
-
-# Extract the generated HTML code
-advice = response.choices[0].message['content'].strip()
-
-# Modify HTML to embed images as Base64
-advice = advice.replace('src="monthly_sums.png"', f'src="data:image/png;base64,{monthly_sums_base64}"')
-advice = advice.replace('src="shame_cloud.png"', f'src="data:image/png;base64,{shame_cloud_base64}"')
-advice = advice.replace('src="BlameBot.png"', f'src="data:image/png;base64,{blamebot_base64}"')
-
-# Write the HTML code to a .html file
-with open('financial_report.html', 'w') as file:
-    file.write(advice)
-
-print("Report written to 'financial_report.html'.")
-
-import pdfkit
-
-# Path to your HTML file and desired output PDF
-input_html = 'financial_report.html'
-output_pdf = 'financial_report.pdf'
-options = {
-    'enable-local-file-access': ''
-}
-pdfkit.from_file(input_html, output_pdf, options=options)
-
-print("PDF version of report written to 'financial_report.pdf'.")
-
-# Load the HTML file content
-with open("financial_report.html", "r") as file:
-    content = file.read()
-
-# Parse the HTML content
-soup = BeautifulSoup(content, "html.parser")
-
-# Redact dollar amounts
-for td in soup.find_all("td"):
-    if "$" in td.text:
-        td.string = "[REDACTED]"
-
-# Redact dollar amounts from paragraphs in the document as well
-for p in soup.find_all("p"):
-    p.string = re.sub(r"\$\d+(?:,\d{3})*(?:\.\d{2})?", "[REDACTED]", p.text)
-
-# Save the modified content to a new HTML file
-output_path = "financial_report_redacted.html"
-with open(output_path, "w") as file:
-    file.write(str(soup))
-
-print("Redacted report written to 'financial_report_redacted.html'.")
-
-# Path to your HTML file and desired output PDF
-input_html = 'financial_report_redacted.html'
-output_pdf = 'financial_report_redacted.pdf'
-pdfkit.from_file(input_html, output_pdf, options=options)
-
-print("PDF version of redacted report written to 'financial_report_redacted.pdf'.")
