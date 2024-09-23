@@ -116,9 +116,9 @@ To adapt BlameBot to your specific needs, you might consider the following custo
 The good news and the bad (in html and PDF, with and without redacting in case you want to hide your shame while going viral).
 Reports minimialist and colorful. The PDF files are so colorful they'll blow your printing budget.  Here are examples, redacted to protect the guilty:
 
-   - [Example Report](https://blamebot.com/report1.html)
-   - [Another Example](https://blamebot.com/report2.html)
-   - [Okay, but this is the last one](https://blamebot.com/report3.html)
+   - [Example Report](https://blamebot.com/example1.html)
+   - [Another Example](https://blamebot.com/example2.html)
+   - [Okay, but this is the last one](https://blamebot.com/example3.html)
 
 ### Words of wisdom
 
