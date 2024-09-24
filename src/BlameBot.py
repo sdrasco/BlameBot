@@ -784,7 +784,7 @@ def shame_cloud(classifier_data, exclude_category=None, output_file=None):
 
     # Save the figure as a PNG file if a filename was given
     if output_file:
-        plt.savefig(output_file, format='png', dpi=300, bbox_inches='tight')
+        plt.savefig(output_file, format='png', dpi=150, bbox_inches='tight', pad_inches=0)
 
     # close the word cloud
     plt.close()
@@ -813,7 +813,7 @@ def build_reports(data):
     plt.yticks([])  # This removes the tick labels
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.savefig('monthly_sums.png', dpi=300, bbox_inches='tight')
+    plt.savefig('monthly_sums.png', dpi=150, bbox_inches='tight')
     # Close the figure to avoid displaying it
     plt.close()
 
@@ -842,28 +842,14 @@ def build_reports(data):
         'Spending per Category': category_sums
     }
 
-    # convert images to base64 so that we can imbed them in the reports
-    def convert_image_to_base64(image_path):
-        """Converts an image to a Base64 encoded string."""
-        with open(image_path, "rb") as image_file:
-            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-        return encoded_string
-
-    # Base64 encoded images
-    monthly_sums_base64 = convert_image_to_base64('monthly_sums.png')
-    shame_cloud_base64 = convert_image_to_base64('shame_cloud.png')
-    blamebot_base64 = convert_image_to_base64('BlameBot.png')
-
-
     prompt = f"""
     You are a sharp and highly paid wealth manager assembling a report for my family. You also quite funny. 
     Based on the following financial summary and image descriptions, provide a detailed reflection and advice, oh and do show off your dry witt in your report.
 
     Structure the report as follows:
 
-    1. **Summary of Data Used**
-       - Include these basic statistics, but possibly others you think relevant.
-       Summary:
+    1. **Summary**
+       - Include these details but possibly others you think relevant:
        - Date Range: {data_summary['Number of days covered']} days
        - Total Spending: {data_summary['Total Spending']}
        - Average Monthly Spending: {data_summary['Average Monthly Spending']}
@@ -894,8 +880,6 @@ def build_reports(data):
     ### Design Guidelines:
     - Use a minimalist, modern layout similar to the style of Google Fi or Octopus Energy bills (e.g. boxes should have rounded corners)
     - All content should be confined to the central 80% of the screen width.  
-    - All tables should be sized to fit within the boxes around them.
-    - Image sizes should be constrained to fit within their contexts
     - Incorporate clean, large headers, and concise sections with ample white space.
     - For the "Summary" section, use a simple table with clean borders.
     - The "Monthly Spending and Word Cloud" section should include large, centered images with explanatory text below them.
@@ -914,66 +898,94 @@ def build_reports(data):
     Please generate the report as a single HTML document with embedded CSS. **Do not include any additional text at all outside of the HTML code.**
     """
 
-    # Generate advice using OpenAI's GPT-4o
+    # Generate rough report using OpenAI's GPT-4o
     response = openai.ChatCompletion.create(
         model='gpt-4o',
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7
     )
 
-    # Extract the generated HTML code
-    advice = response.choices[0].message['content'].strip()
+    # Extract the generated HTML code for parseing/polishing
+    rough_report = response.choices[0].message['content'].strip()
 
-    # Modify HTML to embed images as Base64
-    advice = advice.replace('src="monthly_sums.png"', f'src="data:image/png;base64,{monthly_sums_base64}"')
-    advice = advice.replace('src="shame_cloud.png"', f'src="data:image/png;base64,{shame_cloud_base64}"')
-    advice = advice.replace('src="BlameBot.png"', f'src="data:image/png;base64,{blamebot_base64}"')
+    # Parse the HTML with BeautifulSoup
+    soup = BeautifulSoup(rough_report, 'html.parser')
 
-    # Write the HTML code to a .html file
-    with open('financial_report.html', 'w') as file:
-        file.write(advice)
+    # Add the Google Fonts link to the <head> section
+    font_link_tag = soup.new_tag('link', href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600&display=swap", rel="stylesheet")
+    soup.head.append(font_link_tag)
 
-    print("Report written to 'financial_report.html'.")
+    # Add the font-family style to the <body> tag
+    if 'style' in soup.body.attrs:
+        soup.body['style'] += " font-family: 'Work Sans', Arial, sans-serif;"
+    else:
+        soup.body['style'] = "font-family: 'Work Sans', Arial, sans-serif;"
 
-    # Path to your HTML file and desired output PDF
-    input_html = 'financial_report.html'
-    output_pdf = 'financial_report.pdf'
-    options = {
-        'enable-local-file-access': ''
+    # Function to convert images to Base64
+    def convert_image_to_base64(image_path):
+        """Converts an image to a Base64 encoded string."""
+        with open(image_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+        return encoded_string
+
+    # Base64 encoded images
+    image_map = {
+        'monthly_sums.png': convert_image_to_base64('monthly_sums.png'),
+        'shame_cloud.png': convert_image_to_base64('shame_cloud.png'),
+        'BlameBot.png': convert_image_to_base64('BlameBot_small.png')
     }
-    pdfkit.from_file(input_html, output_pdf, options=options)
 
-    print("PDF version of report written to 'financial_report.pdf'.")
+    # process all image content
+    for img_tag in soup.find_all('img'):
+        src_value = img_tag.get('src')
+        # embed Base64 images
+        if src_value in image_map:
+            img_tag['src'] = f"data:image/png;base64,{image_map[src_value]}"
+        # refit the images
+        if 'style' in img_tag.attrs:
+            img_tag['style'] += " max-width: 90%; height: auto;"
+        else:
+            img_tag['style'] = "max-width: 90%; height: auto;"
+        # round corners of the images
+        if 'style' in img_tag.attrs:
+            img_tag['style'] += " border-radius: 10px;"
+        else:
+            img_tag['style'] = "border-radius: 10px;"
 
-    # Load the HTML file content
-    with open("financial_report.html", "r") as file:
-        content = file.read()
+    # make sure paragraph text is left-justified
+    for p_tag in soup.find_all('p'):
+        if 'style' in p_tag.attrs:
+            p_tag['style'] += " text-align: left;"
+        else:
+            p_tag['style'] = "text-align: left;"
 
-    # Parse the HTML content
-    soup = BeautifulSoup(content, "html.parser")
+    # Write the soup object to an .html file
+    with open('financial_report.html', 'w') as file:
+        file.write(str(soup))  
+    print("Report written to 'financial_report.html'.")
 
     # Redact dollar amounts
     for td in soup.find_all("td"):
         if "$" in td.text:
-            td.string = "[REDACTED]"
-
-    # Redact dollar amounts from paragraphs in the document as well
+            td.string = "[redacted]"
     for p in soup.find_all("p"):
-        p.string = re.sub(r"\$\d+(?:,\d{3})*(?:\.\d{2})?", "[REDACTED]", p.text)
+        p.string = re.sub(r"\$\d+(?:,\d{3})*(?:\.\d{2})?", "[redacted]", p.text)
 
     # Save the modified content to a new HTML file
     output_path = "financial_report_redacted.html"
     with open(output_path, "w") as file:
         file.write(str(soup))
-
     print("Redacted report written to 'financial_report_redacted.html'.")
 
-    # Path to your HTML file and desired output PDF
-    input_html = 'financial_report_redacted.html'
-    output_pdf = 'financial_report_redacted.pdf'
-    pdfkit.from_file(input_html, output_pdf, options=options)
-
-    print("PDF version of redacted report written to 'financial_report_redacted.pdf'.")
+    # # Convert the HTML files to PDF if desired
+    # html_files = [
+    #     ('financial_report.html', 'financial_report.pdf'),
+    #     ('financial_report_redacted.html', 'financial_report_redacted.pdf')
+    # ]
+    # options = {'enable-local-file-access': ''}
+    # for input_html, output_pdf in html_files:
+    #     pdfkit.from_file(input_html, output_pdf, options=options)
+    #     print(f"PDF version of report written to '{output_pdf}'.")
 
 #####################################################################
 #                                                                   #
@@ -1029,6 +1041,6 @@ pd.set_option('display.max_rows', None)
 print(f"\n{category_sums}\n")
 
 # make the reports
-#build_reports(classified.data)
+build_reports(classified.data)
 
 
