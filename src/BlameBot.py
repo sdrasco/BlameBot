@@ -941,17 +941,14 @@ def build_reports(data):
         # embed Base64 images
         if src_value in image_map:
             img_tag['src'] = f"data:image/png;base64,{image_map[src_value]}"
-        # refit the images
+        # refit the images, rounc corners, and center
         if 'style' in img_tag.attrs:
             img_tag['style'] += " max-width: 90%; height: auto;"
         else:
             img_tag['style'] = "max-width: 90%; height: auto;"
-        # round corners of the images
-        if 'style' in img_tag.attrs:
-            img_tag['style'] += " border-radius: 10px;"
-        else:
-            img_tag['style'] = "border-radius: 10px;"
-
+        img_tag['style'] += "border-radius: 10px;"
+        img_tag['style'] += " display: block; margin: 0 auto;"
+        
     # make sure paragraph text is left-justified
     for p_tag in soup.find_all('p'):
         if 'style' in p_tag.attrs:
