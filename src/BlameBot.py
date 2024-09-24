@@ -136,16 +136,16 @@ class AccountProcessor:
         self.clean_description(ColNames=DescriptionColumnNames)
         self.clean_amount()
         
-        # drop all the columns we don't need
-        columns_to_keep = ['Date', 'Description', 'Amount']
-        self.data = self.data[columns_to_keep]
-        return self.data
-
         # Split large sales into more frequent multiple smaller ones
         self.chop_up()
 
         # scale sale amounts to create the Amount_Scaled feature
         self.scale_amount()
+
+        # drop all the columns we don't need
+        columns_to_keep = ['Date', 'Description', 'Amount', 'Amount_Scaled']
+        self.data = self.data[columns_to_keep]
+        return self.data
         
     def summarize(self):
         """
@@ -330,7 +330,7 @@ class AmazonProcessor:
         )
 
         # remove old transactions
-        cutoff_date = datetime(2023, 1, 1).date()
+        cutoff_date = datetime(2019, 1, 1).date()
         date_mask = (self.retail['Order Date Parsed'].dt.date >= cutoff_date) & (self.retail['Ship Date Parsed'].dt.date >= cutoff_date)
         self.retail = self.retail[date_mask].copy()
        
@@ -469,7 +469,7 @@ class AmazonProcessor:
                 relative_diff = (matching_statements['Amount'] - summed_amount).abs() / summed_amount
                 
                 # Set a threshold for relative difference (e.g., 15%)
-                threshold = 0.2
+                threshold = 0.1
                 close_matches = matching_statements[relative_diff < threshold]
                 
                 if not close_matches.empty:
@@ -677,18 +677,7 @@ class AIClassifier:
                 "Provide only the dictionary in the output, without any additional text."
             )
 
-            # # Define the prompt to clarify category names (edit to your liking)
-            # prompt = (
-            #     "Given the following cluster descriptions:\n\n"
-            #     f"{crude_names}\n\n"
-            #     "Create concise and intuitive budget category names for each cluster. "
-            #     "Output the results as a Python dictionary, where each key is the cluster number and each value is the category name, in the format: "
-            #     "{-1: 'category name', 0: 'another category name', ...}. Only output the dictionary in this format "
-            #     "without any extra text. Do not use the word Retail. Do not use the word Shoping. Do not use the word Services. Do not use the word Bills. Most importantly,"
-            #     "try to keep the category names concise as they will be going into a word cloud with limited space."
-            # )
-
-            # Call the OpenAI API (use mini if the prompt is small)
+            # Call the OpenAI API (use mini if the prompt is small enough)
             #response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
             response = openai.ChatCompletion.create(model="gpt-4o", messages=[{"role": "user", "content": prompt}])
 
@@ -847,7 +836,6 @@ def build_reports(data):
         'Spending per Category': category_sums
     }
 
-
     # convert images to base64 so that we can imbed them in the reports
     def convert_image_to_base64(image_path):
         """Converts an image to a Base64 encoded string."""
@@ -876,9 +864,11 @@ def build_reports(data):
        - Highest Spending Month: {data_summary['Highest Spending Month']}
        - Spending per Category: {data_summary['Spending per Category']} (no need to show all categories)
 
-    2. **Monthly Spending and Word Cloud**
-       - Reference and explain both the monthly spending image ('monthly_sums.png') and the word cloud ('shame_cloud.png').
-       - Discuss trends visible in these images and any important outliers.
+    2. **Spending Analysis**
+       - Do an analysis of the spending data in the summary, carefully looking for trends or events.
+       - Describe the findings of your analysis.
+       - Explain the impact of those trends on both the monthly spending image ('monthly_sums.png') and the word cloud ('shame_cloud.png').
+       - Don't reference the file names of the images.
 
     3. **Projections for Annual Costs**
        - Based on current spending trends, provide projections for annual costs. Consider factors such as potential inflation, lifestyle changes, or other likely cost changes.
@@ -978,6 +968,12 @@ def build_reports(data):
     pdfkit.from_file(input_html, output_pdf, options=options)
 
     print("PDF version of redacted report written to 'financial_report_redacted.pdf'.")
+
+#####################################################################
+#                                                                   #
+# Done with classes and methods. Main execution script begins here. #
+#                                                                   #
+#####################################################################
 
 # Set the statement directories
 us_cc_directory = '../data/us_credit_card_statements/'
