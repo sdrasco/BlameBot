@@ -74,8 +74,13 @@ class AccountProcessor:
         made False for accounts with US conventions)
         
         Convert dates to ISO standard (YYYY-MM-DD).
+
+        Remove all transactions that preceed a starting cutoff date
         """
         self.data["Date"] = pd.to_datetime(self.data[DateCol], dayfirst=UK_style)  
+        cutoff_date = datetime(2022, 10, 1).date()
+        date_mask = self.data['Date'].dt.date >= cutoff_date
+        self.data = self.data[date_mask].copy()
 
     def clean_description(self, ColNames):
         """
@@ -371,12 +376,12 @@ class AmazonProcessor:
         Import and clean the amazon digital order history.
         """
         
-        # Parse 'OrderDate' to datetime, and remove old transactions
+        # Parse 'OrderDate' to datetime, and remove orders that pre-date statements
         self.digital['OrderDate Parsed'] = pd.to_datetime(
             self.digital['OrderDate'], format='%Y-%m-%dT%H:%M:%SZ', errors='coerce'
         )
-        cutoff_date = datetime(2023, 1, 1).date()
-        date_mask = self.digital['OrderDate Parsed'].dt.date >= cutoff_date
+        cutoff_date = min(self.statements['Date'])  # Convert cutoff_date to a Timestamp
+        date_mask = self.digital['OrderDate Parsed'] >= cutoff_date
         self.digital = self.digital[date_mask].copy()
        
         # Convert GBP to USD wherever needed
@@ -419,7 +424,6 @@ class AmazonProcessor:
         
         # Count the number of Amazon-related statement rows
         num_matching_rows = amazon_statements_mask.sum()
-        print(f"\nAttempting to refine {num_matching_rows} transactions recognized as Amazon.\n")
         
         # Initialize counters and lists for tracking
         indices_to_delete = []  # To store indices of statements to delete
@@ -494,7 +498,7 @@ class AmazonProcessor:
         # Delete the matched statement rows from self.statements
         if indices_to_delete:
             self.statements = self.statements.drop(index=indices_to_delete).reset_index(drop=True)
-            print(f"Refined {len(indices_to_delete)} amazon transaction descriptions by cross referencing order history data.\n")
+            print(f"\nDeciphered {100*len(indices_to_delete)/num_matching_rows:2.0f}% of Amazon transaction descriptions ({len(indices_to_delete)} out of {num_matching_rows}).\n")
         else:
             print("No matching amazon transactions.")
         
@@ -542,10 +546,12 @@ class AIClassifier:
 
         # Define custom keywords for important categories
         category_keywords = {
-            'travel': ['travel', 'hotel', 'klm', 'airline'],
-            'groceries': ['groceries'],
+            'travel': ['travel', 'hotel', 'lufthansa','klm', 'airline','scotrail','hertz','westin','booking','airport','parking','swinton'],
+            'groceries': ['groceries', 'marks', 'spencer', 'morrisons', 'balgove','larder','margiotta','waitrose','boots','bowhouse'],
             'utilities': ['octopus', 'energy', 'doorstepglassrecycling', 'starlink', 'talktalk'],
-            'booze': ['majestic', 'yapp', 'whisky', 'whiskey', 'yamazaki', 'beer', 'wine', 'gin', 'weisse', 'champagne', 'taitinger']
+            'alcohol': ['alcohol','majestic', 'yapp', 'whisky', 'whiskey', 'yamazaki', 'beer', 'wine', 'gin', 'weisse', 'champagne', 'taitinger'],
+            'tax':['tax','fife','edinburgh','council'],
+            'legal':['legal','thorntons','burness','legl','turcan','connell']
         }
 
         # Train FastText model on the descriptions
@@ -571,8 +577,8 @@ class AIClassifier:
                     # Loop through the category_keywords dictionary to give extra weight to keywords
                     for category, keywords in category_keywords.items():
                         if word in keywords:
-                            weight = 10
-                            sentence_weight = 10
+                            weight = 5
+                            sentence_weight = 5
                         
                     # Multiply the word vector by its weight
                     weighted_vectors.append(weight * model.wv[word])
@@ -589,6 +595,7 @@ class AIClassifier:
             for category, keywords in category_keywords.items():
                 keyword_mask = data['Description'].str.contains('|'.join(keywords), case=False)
                 data.loc[keyword_mask, 'Category'] = category  # Override previous category
+                data.loc[keyword_mask, 'Description'] = category  # Override previous category
             return data
 
         # Combine vectorized descriptions with scaled amounts
@@ -598,7 +605,7 @@ class AIClassifier:
         combined_features.columns = combined_features.columns.astype(str)
 
         # Apply HDBSCAN Clustering
-        clusterer = hdbscan.HDBSCAN(min_cluster_size=12, min_samples=3)  
+        clusterer = hdbscan.HDBSCAN(min_cluster_size=25, min_samples=10)  
 
         # Apply DBSCAN Clustering (alternative to HDBSCAN)
         #clusterer = DBSCAN(eps=0.045, min_samples=3)  # Adjust eps based on your data
@@ -667,11 +674,10 @@ class AIClassifier:
                 "Each name should clearly reflect the type of spending represented by the transactions. "
                 "Please follow these guidelines:\n"
                 "- Each category name should be a maximum of two to three words.\n"
-                "- Avoid generic terms such as 'General', 'Retail', 'Shopping', 'Services', or 'Bills'.\n"
-                "- Do not repeat category names, or even parts of category names, unless absolutely necessary.\n"
+                "- For any category name that is already three or fewer words, you can reduce the number of words, but you cannot increase the number of words.\n"
+                "- Do not use generic terms such as 'General', 'Retail', 'Shopping', 'Services', or 'Bills'.\n"
                 "- The names should be short enough to fit in a word cloud (i.e., succinct and clear).\n"
                 "- Focus on clarity and specificity, making sure the names are easy to understand.\n"
-                "- Ensure the names are distinct from each other.\n\n"
                 "Output the results in a Python dictionary format, where each key is the cluster number and each value is the category name, like this:\n"
                 "{-1: 'category name', 0: 'another category name', ...}. "
                 "Provide only the dictionary in the output, without any additional text."
@@ -704,10 +710,10 @@ class AIClassifier:
                 # write categories to file
                 with open("clarification.json", 'w') as file:
                     json.dump(clarification_data, file, indent=4)
-                    print("Generated new category mappings and saved to clarification.json")
+                    print("\nUpdated category mappings in clarification.json\n")
                 return AI_names
             else:
-                print("Failed to extract budget categories from the response.")
+                print("\nFailed to extract budget categories from the response.\n")
                 return {}
 
         # Define file path
@@ -727,11 +733,11 @@ class AIClassifier:
             # keep old AI_names if new and old crude_names match
             if file_crude_names == crude_names:
                 AI_names = sort_dict(clarification_data.get('AI_names', {}))
-                print("Loaded budget categories from clarification.json")
+                print("\nUsed budget categories in clarification.json.  No need to update.\n")
                 USEAI = False
 
         if USEAI:
-            print("Using GPT-4o to clarify spending category names.")
+            print("Using AI to clarify spending category names.")
             AI_names = ai_clarification(crude_names)
 
         # Using the new dictionary, label the transactions
@@ -982,11 +988,13 @@ amzn_directory = '../data/Amazon/'
 
 # Process the statements
 uscc = CreditCardUS(us_cc_directory)
-clean_uscc = uscc.process(DateCol='Transaction Date', UK_style=False, DescriptionColumnNames=['Description', 'Category'])
+#clean_uscc = uscc.process(DateCol='Transaction Date', UK_style=False, DescriptionColumnNames=['Description', 'Category'])
+clean_uscc = uscc.process(DateCol='Transaction Date', UK_style=False, DescriptionColumnNames=['Description'])
 print("\nUS credit card summary:\n")
 print(uscc.summarize())
 ukbank = uk_bank(uk_bank_directory)
-clean_ukbank = ukbank.process(DateCol='Date', UK_style=True, DescriptionColumnNames=['Name', 'Address', 'Description'])
+#clean_ukbank = ukbank.process(DateCol='Date', UK_style=True, DescriptionColumnNames=['Name', 'Address', 'Description', 'Category'])
+clean_ukbank = ukbank.process(DateCol='Date', UK_style=True, DescriptionColumnNames=['Name', 'Description'])
 print("\nUK bank account summary:\n")
 print(ukbank.summarize())
 
@@ -1007,20 +1015,20 @@ classified.data['Category'].value_counts()
 
 # Get the number of unique values in the 'Category' column
 num_unique_categories = classified.data['Category'].nunique()
-print(f"\nDefined {num_unique_categories} spending categories.")
+print(f"Defined {num_unique_categories} spending categories.")
 
 # Group by 'Category' and sum the 'Amount' for each category
 category_sums = classified.data.groupby('Category')['Amount'].sum()
 
-# Sort the summed amounts in descending order
+# Sort and round the summed amounts in descending order
 category_sums = category_sums.sort_values(ascending=False)
+category_sums = category_sums.round().astype(int)
 
 # Display the sorted summed amounts for each category
 pd.set_option('display.max_rows', None)
-print(f"\nCategory totals:\n{category_sums}\n")
+print(f"\n{category_sums}\n")
 
 # make the reports
-build_reports(classified.data)
-
+#build_reports(classified.data)
 
 
