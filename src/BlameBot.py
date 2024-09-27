@@ -686,7 +686,7 @@ class AIClassifier:
                 "Please follow these guidelines:\n"
                 "- Each category name should be a maximum of two to three words.\n"
                 "- For any category name that is already three or fewer words, you can reduce the number of words, but you cannot increase the number of words.\n"
-                "- Do not use generic terms such as 'General', 'Retail', 'Shopping', 'Services', or 'Bills'.\n"
+                "- Do not use ambiguous terms such as 'General', 'essentials', 'misc', 'Miscellaneous', 'Retail', 'Shopping', 'Services', or 'Bills'.\n"
                 "- The names should be short enough to fit in a word cloud (i.e., succinct and clear).\n"
                 "- Focus on clarity and specificity, making sure the names are easy to understand.\n"
                 "Output the results in a Python dictionary format, where each key is the cluster number and each value is the category name, like this:\n"
