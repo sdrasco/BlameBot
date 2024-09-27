@@ -16,10 +16,11 @@ from bs4 import BeautifulSoup
 from glob import glob
 from gensim.models import FastText
 from sklearn.cluster import KMeans, DBSCAN
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, normalize
 from wordcloud import WordCloud
 from datetime import datetime, timedelta
 SEED = 846 # random seed
+OURMODEL = "gpt-4o-mini"
 
 class AccountProcessor:
     def __init__(self, data_directory):
@@ -546,7 +547,7 @@ class AIClassifier:
 
         # Define custom keywords for important categories
         category_keywords = {
-            'travel': ['travel', 'hotel', 'lufthansa','klm', 'airline','scotrail','hertz','westin','booking','airport','parking','swinton'],
+            'travel': ['travel', 'hotel', 'lufthansa','klm', 'baonline', 'easyjet', 'air', 'airline','scotrail','hertz','westin','booking','airport','parking','swinton'],
             'groceries': ['groceries', 'marks', 'spencer', 'morrisons', 'balgove','larder','margiotta','waitrose','boots','bowhouse'],
             'utilities': ['octopus', 'energy', 'doorstepglassrecycling', 'starlink', 'talktalk'],
             'alcohol': ['alcohol','majestic', 'yapp', 'whisky', 'whiskey', 'yamazaki', 'beer', 'wine', 'gin', 'weisse', 'champagne', 'taitinger'],
@@ -598,6 +599,9 @@ class AIClassifier:
                 data.loc[keyword_mask, 'Description'] = category  # Override previous category
             return data
 
+        # Normalize FastText vectors (L2 normalization)
+        vector_df_normalized = normalize(vector_df, norm='l2', axis=1)
+
         # Combine vectorized descriptions with scaled amounts
         combined_features = pd.concat([vector_df, self.data[['Amount_Scaled']]], axis=1).fillna(0)
 
@@ -605,7 +609,7 @@ class AIClassifier:
         combined_features.columns = combined_features.columns.astype(str)
 
         # Apply HDBSCAN Clustering
-        clusterer = hdbscan.HDBSCAN(min_cluster_size=25, min_samples=10)  
+        clusterer = hdbscan.HDBSCAN(min_cluster_size=15, min_samples=5)  
 
         # Apply DBSCAN Clustering (alternative to HDBSCAN)
         #clusterer = DBSCAN(eps=0.045, min_samples=3)  # Adjust eps based on your data
@@ -664,7 +668,7 @@ class AIClassifier:
             - budget_categories (dict): A dictionary of improved budget category names.
             """
             openai.api_key = os.getenv("OPENAI_API_KEY")
-
+            
             # Define the prompt to clarify category names
             prompt = (
                 "You are a financial expert tasked with refining budget category names for different clusters of transactions. "
@@ -683,9 +687,9 @@ class AIClassifier:
                 "Provide only the dictionary in the output, without any additional text."
             )
 
-            # Call the OpenAI API (use mini if the prompt is small enough)
-            #response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
-            response = openai.ChatCompletion.create(model="gpt-4o", messages=[{"role": "user", "content": prompt}])
+            # Call the OpenAI API 
+            response = openai.ChatCompletion.create(model=OURMODEL, messages=[{"role": "user", "content": prompt}])
+            
 
             # Extract the response content
             response_text = response.choices[0].message['content']
@@ -835,21 +839,21 @@ def build_reports(data):
     # Prepare summary dictionary
     data_summary = {
         'Number of days covered': f"{num_days}",
-        'Total Spending': f"${total_spending:,.2f}",
-        'Average Monthly Spending': f"${average_monthly_spending:,.2f}",
+        'Total Spending': f"${total_spending:,.0f}",
+        'Average Monthly Spending': f"${average_monthly_spending:,.0f}",
         'Highest Spending Month': highest_spending_month,
         'Top Expense Categories': ', '.join(top_categories),
         'Spending per Category': category_sums
     }
 
     prompt = f"""
-    You are a sharp and highly paid wealth manager assembling a report for my family. You also quite funny. 
-    Based on the following financial summary and image descriptions, provide a detailed reflection and advice, oh and do show off your dry witt in your report.
-
+    You are BlameBot a clever wealth manager assembling a report for my family. You also quite funny, so do show off your dry witt in the report.
+    
     Structure the report as follows:
 
     1. **Summary**
-       - Include these details but possibly others you think relevant:
+       - Describe the nature of this report
+       - Include some or all of these details of the data considered, using a clear table:
        - Date Range: {data_summary['Number of days covered']} days
        - Total Spending: {data_summary['Total Spending']}
        - Average Monthly Spending: {data_summary['Average Monthly Spending']}
@@ -858,49 +862,46 @@ def build_reports(data):
 
     2. **Spending Analysis**
        - Do an analysis of the spending data in the summary, carefully looking for trends or events.
+       - Show and talk about 'shame_cloud.png', the word cloud of shame built out of the spending category names and amounts
        - Describe the findings of your analysis.
-       - Explain the impact of those trends on both the monthly spending image ('monthly_sums.png') and the word cloud ('shame_cloud.png').
-       - Don't reference the file names of the images.
+       - Show and talk about 'monthly_sums.png', a bar chart of amounts spent each month
+       - Don't use the image filenames in the text
 
     3. **Projections for Annual Costs**
        - Based on current spending trends, provide projections for annual costs. Consider factors such as potential inflation, lifestyle changes, or other likely cost changes.
        
     4. **Suggested Budget by Category**
-       - Propose a more concise annual and weekly budget, consolidating spending categories if necessary.
+       - Propose a more concise annual and weekly budget, consolidated to five spending categories.
+       - Include a table with totals at the bottom row
 
     6. **Sustainability Outline**
        - Provide an assessment of the income needed to sustain the suggested budget, including pre- and post-tax amounts, stating the assumed tax rates.
+       - Include a second sustainability assessment assuming a combination of employment income and investment income from approximately $2,000,000 USD invested in securities with medium risk. 
 
-    7. **Sustainability with Investment Income**
-       - Include a second sustainability assessment assuming a combination of employment income and investment income from approximately $2,000,000 USD invested in securities with medium risk. Consider realistic returns on investment and how this affects the income needed to meet the proposed budget.
-
-    End the report with a footer made of the logo 'BlameBot.png' (an image of a robot) constrained to about an inch or two on a typical screen size 
-    that links to https://blamebot.com/ when clicked. To the right of the image put extremely funny self depricating words of family finance wisdom in a dry-humor style.
+    End the report with a footer containing a thumbnail of your image 'BlameBot_small.png' 
+    that links to https://blamebot.com/ when clicked. To the right of the thumbnail, put a pearl of self wisdom about family finance in your signature self depricating dry-humor style.
 
     ### Design Guidelines:
-    - Use a minimalist, modern layout similar to the style of Google Fi or Octopus Energy bills (e.g. boxes should have rounded corners)
+    - Use a minimalist, modern layout (e.g. clean, large headers, concise sections in boxes with rounded corners and ample white space)
     - All content should be confined to the central 80% of the screen width.  
-    - Incorporate clean, large headers, and concise sections with ample white space.
-    - For the "Summary" section, use a simple table with clean borders.
-    - The "Monthly Spending and Word Cloud" section should include large, centered images with explanatory text below them.
-    - Use **bold headings** and well-spaced paragraphs for clarity.
-    - Ensure all numbers (such as amounts) are formatted appropriately (e.g., currency with commas and two decimal places).
-    - Color scheme: Background should be a soft orange, Boxes should be a soft light blue, headers should be a soft red. Text should be a soft black.  The report should be colorful, but the colors should be subtle and calming.
-    - **No repetition of the summary or images verbatim**, and use your own discretion in explaining the data.
+    - Ensure all numbers (such as amounts) are formatted appropriately (e.g., currency with commas, round to whole numbers).
+    - Color scheme: Background should be a soft orange, Boxes should be a soft light blue, headers should be a soft red. Text should be a soft black.  
+    - The colors should be muted, subtle, soft, and calming.
 
     ### HTML Output Requirements:
     - Provide the HTML code **without any markdown or code block formatting** (e.g., no ```html or ``` around the code).
     - Use appropriate HTML5 elements (`<section>`, `<header>`, `<table>`, etc.) to structure the document.
-    - Include basic inline CSS for layout and typography. Focus on minimalism and readability.
-    - The images ('shame_cloud.png' and 'monthly_sums.png') should be referenced with `<img>` tags and with appropriately constrained sizes.
-    - All text should be wrapped in `<p>`, `<h1>`, `<h2>`, or `<div>` tags, ensuring proper hierarchy.
+    - Use mathjax for any equations
+    - Include basic inline CSS for layout and typography
+    - The images should be referenced with `<img>` tags
+    - All text should be wrapped in `<p>`, `<h1>`, `<h2>`, or `<div>` tags, ensuring proper hierarchy
 
     Please generate the report as a single HTML document with embedded CSS. **Do not include any additional text at all outside of the HTML code.**
     """
 
-    # Generate rough report using OpenAI's GPT-4o
+    # Generate rough report using OpenAI's API
     response = openai.ChatCompletion.create(
-        model='gpt-4o',
+        model=OURMODEL,
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7
     )
@@ -941,12 +942,12 @@ def build_reports(data):
         # embed Base64 images
         if src_value in image_map:
             img_tag['src'] = f"data:image/png;base64,{image_map[src_value]}"
-        # refit the images, rounc corners, and center
+        # refit the images, round corners, and center
         if 'style' in img_tag.attrs:
-            img_tag['style'] += " max-width: 90%; height: auto;"
+            img_tag['style'] += "border-radius: 10px;"
         else:
-            img_tag['style'] = "max-width: 90%; height: auto;"
-        img_tag['style'] += "border-radius: 10px;"
+            img_tag['style'] = "border-radius: 10px;"
+        img_tag['style'] += " max-width: 80%; height: auto;"
         img_tag['style'] += " display: block; margin: 0 auto;"
         
     # make sure paragraph text is left-justified
