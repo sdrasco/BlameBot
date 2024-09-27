@@ -16,11 +16,10 @@ from bs4 import BeautifulSoup
 from glob import glob
 from gensim.models import FastText
 from sklearn.cluster import KMeans, DBSCAN
-from sklearn.preprocessing import StandardScaler, normalize
+from sklearn.preprocessing import StandardScaler, normalize, MinMaxScaler
 from wordcloud import WordCloud
 from datetime import datetime, timedelta
 SEED = 846 # random seed
-OURMODEL = "gpt-4o-mini"
 
 class AccountProcessor:
     def __init__(self, data_directory):
@@ -589,31 +588,10 @@ class AIClassifier:
 
         # Apply weighted vectorization to the descriptions
         self.data['FastText_Vector'] = self.data['Description'].apply(lambda x: get_weighted_sentence_vector(x, model, category_keywords))
-        vector_df = pd.DataFrame(self.data['FastText_Vector'].tolist(), index=self.data.index)
+        self.vector_df = pd.DataFrame(self.data['FastText_Vector'].tolist(), index=self.data.index)
 
-        # make some post-clustering rules as a backup plan for getting keywords where we want them
-        def apply_post_clustering_rules(data, category_keywords):
-            for category, keywords in category_keywords.items():
-                keyword_mask = data['Description'].str.contains('|'.join(keywords), case=False)
-                data.loc[keyword_mask, 'Category'] = category  # Override previous category
-                data.loc[keyword_mask, 'Description'] = category  # Override previous category
-            return data
-
-        # Combine vectorized descriptions with scaled amounts
-        combined_features = pd.concat([vector_df, self.data[['Amount_Scaled']]], axis=1).fillna(0)
-
-        # Save column names and index before normalization
-        column_names = combined_features.columns
-        index_values = combined_features.index
-
-        # Normalize the high dimensional vectors before clustering
-        combined_features_normalized = normalize(combined_features, norm='l2', axis=1)
-
-        # Convert the result back to a DataFrame with the saved column names and index
-        combined_features = pd.DataFrame(combined_features_normalized, columns=column_names, index=index_values)
-
-        # Convert all column names to strings to ensure compatibility with HDDBSCAN
-        combined_features.columns = combined_features.columns.astype(str)
+        # Append the Date and Ammount_Scaled features onto the word vectors, then scale the vectors
+        self.combine_features()
 
         # Apply HDBSCAN Clustering
         clusterer = hdbscan.HDBSCAN(min_cluster_size=15, min_samples=5)  
@@ -625,9 +603,15 @@ class AIClassifier:
         # clusterer = KMeans(n_clusters=30, n_init='auto', random_state=SEED)
 
         # get cluster labels
-        cluster_labels = clusterer.fit_predict(combined_features)
+        cluster_labels = clusterer.fit_predict(self.combined_features)
 
         # Apply post-clustering rules to force certain keywords into predefined categories
+        def apply_post_clustering_rules(data, category_keywords):
+            for category, keywords in category_keywords.items():
+                keyword_mask = data['Description'].str.contains('|'.join(keywords), case=False)
+                data.loc[keyword_mask, 'Category'] = category  # Override previous category
+                data.loc[keyword_mask, 'Description'] = category  # Override previous category
+            return data
         self.data = apply_post_clustering_rules(self.data, category_keywords)
 
         # apply cluster labels
@@ -644,90 +628,121 @@ class AIClassifier:
             common_keywords = pd.Series(keywords).value_counts().head(10).index.tolist()
             crude_names[cluster] = ", ".join(common_keywords)
 
-        def sort_dict(d):
-            """
-            Converts dictionary keys to integers and returns a new dictionary sorted by these keys.
-
-            Parameters:
-            - d (dict): The original dictionary with string keys.
-
-            Returns:
-            - dict: A new dictionary with integer keys, sorted in ascending order.
-            """
-            # Convert keys to integers
-            int_key_dict = {int(k): v for k, v in d.items()}
-            # Sort the dictionary by keys
-            return dict(sorted(int_key_dict.items()))
-        
         # Sort crude_names 
-        crude_names = sort_dict(crude_names)
-     
-        def ai_clarification(crude_names):
-            """
-            Calls the OpenAI API to suggest concise and intuitive budget category names
-            for the provided cluster descriptions. Extracts and returns the resulting 
-            budget categories as a dictionary.
+        crude_names = self.sort_dict(crude_names)
 
-            Parameters:
-            - cluster_names (dict): A dictionary of poorly named categories.
+        # Get or create names that have been clarified by AI
+        self.use_ai_clarification(crude_names)
 
-            Returns:
-            - budget_categories (dict): A dictionary of improved budget category names.
-            """
-            openai.api_key = os.getenv("OPENAI_API_KEY")
+    def combine_features(self):
+        """
+        Extracts and scales date features from self.data['Date'], combines them with vectorized
+        descriptions and scaled amounts, normalizes the combined features, and prepares the data
+        for clustering.
+        """
+
+        # Extract date features
+        self.data['Year'] = self.data['Date'].dt.year
+        self.data['Month'] = self.data['Date'].dt.month
+        self.data['Day'] = self.data['Date'].dt.day
+        self.data['Hour'] = self.data['Date'].dt.hour
+        self.data['DayOfWeek'] = self.data['Date'].dt.weekday  # Monday=0, Sunday=6
+
+        # Normalize 'Hour' as cyclical feature
+        self.data['Hour_Sin'] = np.sin(2 * np.pi * self.data['Hour'] / 24)
+        self.data['Hour_Cos'] = np.cos(2 * np.pi * self.data['Hour'] / 24)
+
+        # Initialize a scaler
+        scaler = MinMaxScaler()
+
+        # Scale date features
+        date_features = ['Year', 'Month', 'Day', 'Hour', 'DayOfWeek']
+        self.data[date_features] = scaler.fit_transform(self.data[date_features])
+
+        # Combine vectorized descriptions, scaled amounts, and scaled date features
+        self.combined_features = pd.concat([self.vector_df, self.data[['Amount_Scaled']], self.data[date_features]], axis=1).fillna(0)
+
+        # Save column names and index before normalization
+        column_names = self.combined_features.columns
+        index_values = self.combined_features.index
+
+        # Normalize the high dimensional vectors before clustering
+        combined_features_normalized = normalize(self.combined_features, norm='l2', axis=1)
+
+        # Convert the result back to a DataFrame with the saved column names and index
+        self.combined_features = pd.DataFrame(combined_features_normalized, columns=column_names, index=index_values)
+
+        # Convert all column names to strings to ensure compatibility with HDDBSCAN
+        self.combined_features.columns = self.combined_features.columns.astype(str)
+######################
+    def ai_clarification(self, crude_names):
+        """
+        Calls the OpenAI API to suggest concise and intuitive budget category names
+        for the provided cluster descriptions. Extracts and returns the resulting 
+        budget categories as a dictionary.
+
+        Parameters:
+        - crude_names (dict): A dictionary of poorly named categories.
+
+        Returns:
+        - budget_categories (dict): A dictionary of improved budget category names.
+        """
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+        
+        # Define the prompt to clarify category names
+        prompt = (
+            "You are a financial expert tasked with refining budget category names for different clusters of transactions. "
+            "The following are descriptions of the transaction clusters:\n\n"
+            f"{crude_names}\n\n"
+            "Your job is to generate concise, intuitive, and meaningful category names for each cluster. "
+            "Each name should clearly reflect the type of spending represented by the transactions. "
+            "Please follow these guidelines:\n"
+            "- Each category name should be a maximum of two to three words.\n"
+            "- For any category name that is already three or fewer words, you can reduce the number of words, but you cannot increase the number of words.\n"
+            "- Do not use ambiguous terms such as 'General', 'essentials', 'misc', 'Miscellaneous', 'Retail', 'Shopping', 'Services', or 'Bills'.\n"
+            "- The names should be short enough to fit in a word cloud (i.e., succinct and clear).\n"
+            "- Focus on clarity and specificity, making sure the names are easy to understand.\n"
+            "Output the results in a Python dictionary format, where each key is the cluster number and each value is the category name, like this:\n"
+            "{-1: 'category name', 0: 'another category name', ...}. "
+            "Provide only the dictionary in the output, without any additional text."
+        )
+
+        # Call the OpenAI API 
+        response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
+
+        # Extract the response content
+        response_text = response.choices[0].message['content']
+
+        # Use regex to extract the dictionary from the response
+        match = re.search(r'{.*?}', response_text, re.DOTALL)
+
+        if match:
+            AI_names_str = match.group(0)
+            AI_names = ast.literal_eval(AI_names_str)  # Safely parse the dictionary
             
-            # Define the prompt to clarify category names
-            prompt = (
-                "You are a financial expert tasked with refining budget category names for different clusters of transactions. "
-                "The following are descriptions of the transaction clusters:\n\n"
-                f"{crude_names}\n\n"
-                "Your job is to generate concise, intuitive, and meaningful category names for each cluster. "
-                "Each name should clearly reflect the type of spending represented by the transactions. "
-                "Please follow these guidelines:\n"
-                "- Each category name should be a maximum of two to three words.\n"
-                "- For any category name that is already three or fewer words, you can reduce the number of words, but you cannot increase the number of words.\n"
-                "- Do not use ambiguous terms such as 'General', 'essentials', 'misc', 'Miscellaneous', 'Retail', 'Shopping', 'Services', or 'Bills'.\n"
-                "- The names should be short enough to fit in a word cloud (i.e., succinct and clear).\n"
-                "- Focus on clarity and specificity, making sure the names are easy to understand.\n"
-                "Output the results in a Python dictionary format, where each key is the cluster number and each value is the category name, like this:\n"
-                "{-1: 'category name', 0: 'another category name', ...}. "
-                "Provide only the dictionary in the output, without any additional text."
-            )
-
-            # Call the OpenAI API 
-            response = openai.ChatCompletion.create(model=OURMODEL, messages=[{"role": "user", "content": prompt}])
+            # Sort keys and convert to int
+            AI_names = self.sort_dict(AI_names)
+            crude_names = self.sort_dict(crude_names)
             
+            # Make a single dictionary for output to json file
+            clarification_data = {
+                'AI_names': AI_names,
+                'crude_names': crude_names
+            }
 
-            # Extract the response content
-            response_text = response.choices[0].message['content']
+            # Write categories to file
+            with open("clarification.json", 'w') as file:
+                json.dump(clarification_data, file, indent=4)
+                print("\nUpdated category mappings in clarification.json\n")
+            return AI_names
+        else:
+            print("\nFailed to extract budget categories from the response.\n")
+            return {}
 
-            # Use regex to extract the dictionary from the response
-            match = re.search(r'{.*?}', response_text, re.DOTALL)
-
-            if match:
-                AI_names_str = match.group(0)
-                AI_names = ast.literal_eval(AI_names_str)  # Safely parse the dictionary
-                
-                # Sort keys and convert to int
-                AI_names = sort_dict(AI_names)
-                crude_names = sort_dict(crude_names)
-                
-                # make a single dictionary for output to json file
-                clarification_data = {
-                    'AI_names': AI_names,
-                    'crude_names': crude_names
-                }
-
-                # write categories to file
-                with open("clarification.json", 'w') as file:
-                    json.dump(clarification_data, file, indent=4)
-                    print("\nUpdated category mappings in clarification.json\n")
-                return AI_names
-            else:
-                print("\nFailed to extract budget categories from the response.\n")
-                return {}
-
-        # Define file path
+    def use_ai_clarification(self, crude_names):
+        """
+        Method to handle checking for existing clarification data, and calling AI clarification if necessary.
+        """
         clarification_file = 'clarification.json'
 
         # Initialize AI clarification flag
@@ -739,20 +754,36 @@ class AIClassifier:
                 clarification_data = json.load(file)
 
             # Extract crude_names from the loaded data
-            file_crude_names = sort_dict(clarification_data.get('crude_names', {}))
+            file_crude_names = self.sort_dict(clarification_data.get('crude_names', {}))
 
-            # keep old AI_names if new and old crude_names match
+            # Keep old AI_names if new and old crude_names match
             if file_crude_names == crude_names:
-                AI_names = sort_dict(clarification_data.get('AI_names', {}))
+                AI_names = self.sort_dict(clarification_data.get('AI_names', {}))
                 print("\nUsed budget categories in clarification.json.  No need to update.\n")
                 USEAI = False
 
         if USEAI:
             print("Using AI to clarify spending category names.")
-            AI_names = ai_clarification(crude_names)
+            AI_names = self.ai_clarification(crude_names)
 
         # Using the new dictionary, label the transactions
         self.data['Category'] = self.data['Cluster_Label'].map(AI_names)
+
+    def sort_dict(self, d):
+        """
+        Converts dictionary keys to integers and returns a new dictionary sorted by these keys.
+
+        Parameters:
+        - d (dict): The original dictionary with string keys.
+
+        Returns:
+        - dict: A new dictionary with integer keys, sorted in ascending order.
+        """
+        # Convert keys to integers
+        int_key_dict = {int(k): v for k, v in d.items()}
+        # Sort the dictionary by keys
+        return dict(sorted(int_key_dict.items()))
+######################
 
 def shame_cloud(classifier_data, exclude_category=None, output_file=None):
     """
@@ -908,7 +939,7 @@ def build_reports(data):
 
     # Generate rough report using OpenAI's API
     response = openai.ChatCompletion.create(
-        model=OURMODEL,
+        model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7
     )
@@ -1047,5 +1078,4 @@ print(f"\n{category_sums}\n")
 
 # make the reports
 build_reports(classified.data)
-
 
