@@ -686,7 +686,7 @@ class AIClassifier:
 
         # Convert all column names to strings to ensure compatibility with HDDBSCAN
         self.combined_features.columns = self.combined_features.columns.astype(str)
-######################
+
     def ai_clarification(self, crude_names):
         """
         Calls the OpenAI API to suggest concise and intuitive budget category names
@@ -795,7 +795,6 @@ class AIClassifier:
         int_key_dict = {int(k): v for k, v in d.items()}
         # Sort the dictionary by keys
         return dict(sorted(int_key_dict.items()))
-######################
 
 def shame_cloud(classifier_data, exclude_category=None, output_file=None):
     """
@@ -842,6 +841,58 @@ def shame_cloud(classifier_data, exclude_category=None, output_file=None):
 
     # close the word cloud
     plt.close()
+
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+
+    # Sort category_dict by amount and take the top categories
+    top_categories = [category for category, amount in sorted(category_dict.items(), key=lambda x: x[1], reverse=True)[0:5]]
+    
+    # Convert the top categories into a readable summary format
+    spending_habits = ", ".join(top_categories)
+
+    # describe the family doing the spending
+    family_description = "an american husband and wife who emigrated to scotland. The man is a nerdy physicist and the wife is beautiful art historian. They have two cats (one brown, one grey-tuxedo)."
+
+    # Combine the family description and spending categories into the prompt
+    prompt = f"A comical cartoon image depicting {family_description} The image should reflect a lifestyle in which they spend all their money on {spending_habits}. **no words**"
+    
+    # Ask GPT-4 to refine the prompt for DALL-E 3
+    response = openai.ChatCompletion.create(
+        model="gpt-4o-mini",  
+        messages=[
+            {"role": "system", "content": "You are an expert at creating prompts for DALL-E 3 image generation."},
+            {"role": "user", "content": f"Refine this prompt for DALL-E 3: {prompt}"}
+        ]
+    )
+
+    # Extract the clarified prompt
+    clarified_prompt = response['choices'][0]['message']['content']
+    
+    # Call the OpenAI DALL-E-3API
+    response = openai.Image.create(
+        model="dall-e-3",
+        prompt=clarified_prompt,
+        n=1,
+        size="1024x1024",
+        quality="hd",
+        response_format="url"  # Could also be "b64_json" if you want the image data directly
+    )
+
+    # Save the image
+    image_url = response['data'][0]['url']
+
+    # If using a base64 response:
+    # import base64
+    # with open("family.png", "wb") as image_file:
+    #     image_file.write(base64.b64decode(response['data'][0]['b64_json']))
+        
+    # If using a URL:
+    import requests
+    img_data = requests.get(image_url).content
+    with open('family.png', 'wb') as handler:
+        handler.write(img_data)
+
+    print("Image saved as family.png")
 
 def build_reports(data):
 
@@ -909,6 +960,7 @@ def build_reports(data):
        - Average Monthly Spending: {data_summary['Average Monthly Spending']}
        - Highest Spending Month: {data_summary['Highest Spending Month']}
        - Spending per Category: {data_summary['Spending per Category']} (no need to show all categories)
+       - Display the image 'family.png', a portrait of this family depicting their lifestyle, and talk about it.
 
     2. **Spending Analysis**
        - Do an analysis of the spending data in the summary, carefully looking for trends or events.
@@ -1090,4 +1142,5 @@ print(f"\n{category_sums}\n")
 
 # make the reports
 build_reports(classified.data)
+
 
