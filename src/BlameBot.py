@@ -546,12 +546,24 @@ class AIClassifier:
 
         # Define custom keywords for important categories
         category_keywords = {
-            'travel': ['travel', 'hotel', 'lufthansa','klm', 'baonline', 'easyjet', 'air', 'airline','scotrail','hertz','westin','booking','airport','parking','swinton'],
-            'groceries': ['groceries', 'marks', 'spencer', 'morrisons', 'balgove','larder','margiotta','waitrose','boots','bowhouse'],
+            'travel': ['travel', 'hotel', 'lufthansa', 'klm', 'baonline', 'easyjet', 'air', 'airline', 'scotrail', 'hertz', 'westin', 'booking', 'airport', 'parking', 'swinton'],
+            'groceries': ['groceries', 'marks', 'spencer', 'morrisons', 'balgove', 'larder', 'margiotta', 'waitrose', 'boots', 'bowhouse'],
             'utilities': ['octopus', 'energy', 'doorstepglassrecycling', 'starlink', 'talktalk'],
-            'alcohol': ['alcohol','majestic', 'yapp', 'whisky', 'whiskey', 'yamazaki', 'beer', 'wine', 'gin', 'weisse', 'champagne', 'taitinger'],
-            'tax':['tax','fife','edinburgh','council'],
-            'legal':['legal','thorntons','burness','legl','turcan','connell']
+            'alcohol': ['alcohol', 'majestic', 'yapp', 'whisky', 'whiskey', 'yamazaki', 'beer', 'wine', 'gin', 'weisse', 'champagne', 'taittinger'],
+            'tax': ['tax', 'fife', 'edinburgh', 'council'],
+            'legal': ['legal', 'thorntons', 'burness', 'legl', 'turcan', 'connell'],
+            'pets': ['pet', 'vet', 'animal', 'cat', 'litter', 'canin'],
+            'entertainment': ['cinema', 'netflix', 'spotify', 'theatre', 'concert'],
+            'dining': ['restaurant', 'dining', 'cafe', 'bar', 'pub'],
+            'local transport': ['uber', 'lyft', 'taxi', 'bus', 'subway', 'metro'],
+            'health': ['doctor', 'pharmacy', 'hospital', 'clinic', 'health'],
+            'clothing': ['clothes', 'apparel', 'fashion', 'shoe', 'wear'],
+            'technology': ['apple', 'microsoft', 'google', 'openai', 'chatgpt', 'electronics', 'gadgets', 'tech'],
+            'home': ['ikea', 'furniture', 'decor', 'home', 'garden', 'bed'],
+            'insurance': ['insurance', 'policy', 'premium'],
+            'charity': ['donation', 'charity', 'ngo', 'fundraiser'],
+            'investments': ['stock', 'bond', 'investment', 'portfolio', 'dividend'],
+            'fees': ['fee', 'charge', 'penalty', 'interest'],
         }
 
         # Train FastText model on the descriptions
@@ -699,7 +711,7 @@ class AIClassifier:
             "Please follow these guidelines:\n"
             "- Each category name should be a maximum of two to three words.\n"
             "- For any category name that is already three or fewer words, you can reduce the number of words, but you cannot increase the number of words.\n"
-            "- Do not use ambiguous terms such as 'General', 'essentials', 'misc', 'Miscellaneous', 'Retail', 'Shopping', 'Services', or 'Bills'.\n"
+            "- Do not use ambiguous terms such as 'General', 'essentials','more', 'misc', 'Miscellaneous', 'Retail', 'Shopping', 'Services', or 'Bills'.\n"
             "- The names should be short enough to fit in a word cloud (i.e., succinct and clear).\n"
             "- Focus on clarity and specificity, making sure the names are easy to understand.\n"
             "Output the results in a Python dictionary format, where each key is the cluster number and each value is the category name, like this:\n"
@@ -900,9 +912,9 @@ def build_reports(data):
 
     2. **Spending Analysis**
        - Do an analysis of the spending data in the summary, carefully looking for trends or events.
-       - Show and talk about 'shame_cloud.png', the word cloud of shame built out of the spending category names and amounts
+       - Display the image 'shame_cloud.png', the word cloud of shame built out of the spending category names and amounts, and talk about it
        - Describe the findings of your analysis.
-       - Show and talk about 'monthly_sums.png', a bar chart of amounts spent each month
+       - Display the image 'monthly_sums.png', a bar chart of amounts spent each month, and talk about it
        - Don't use the image filenames in the text
 
     3. **Projections for Annual Costs**
