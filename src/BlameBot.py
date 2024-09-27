@@ -599,11 +599,18 @@ class AIClassifier:
                 data.loc[keyword_mask, 'Description'] = category  # Override previous category
             return data
 
-        # Normalize FastText vectors (L2 normalization)
-        vector_df_normalized = normalize(vector_df, norm='l2', axis=1)
-
         # Combine vectorized descriptions with scaled amounts
         combined_features = pd.concat([vector_df, self.data[['Amount_Scaled']]], axis=1).fillna(0)
+
+        # Save column names and index before normalization
+        column_names = combined_features.columns
+        index_values = combined_features.index
+
+        # Normalize the high dimensional vectors before clustering
+        combined_features_normalized = normalize(combined_features, norm='l2', axis=1)
+
+        # Convert the result back to a DataFrame with the saved column names and index
+        combined_features = pd.DataFrame(combined_features_normalized, columns=column_names, index=index_values)
 
         # Convert all column names to strings to ensure compatibility with HDDBSCAN
         combined_features.columns = combined_features.columns.astype(str)
