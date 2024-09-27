@@ -851,7 +851,7 @@ def shame_cloud(classifier_data, exclude_category=None, output_file=None):
     spending_habits = ", ".join(top_categories)
 
     # describe the family doing the spending
-    family_description = "an american husband and wife who emigrated to scotland. The man is a nerdy physicist and the wife is beautiful art historian. They have two cats (one brown, one grey-tuxedo)."
+    family_description = "an american husband (tech guy) and wife (professor) who emigrated to scotland. They have two cats (one brown, one grey-tuxedo)."
 
     # Combine the family description and spending categories into the prompt
     prompt = f"A comical cartoon image depicting {family_description} The image should reflect a lifestyle in which they spend all their money on {spending_habits}. **no words**"
