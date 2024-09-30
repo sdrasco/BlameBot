@@ -966,7 +966,6 @@ def build_reports(data):
        - Average Monthly Spending: {data_summary['Average Monthly Spending']}
        - Highest Spending Month: {data_summary['Highest Spending Month']}
        - Spending per Category: {data_summary['Spending per Category']} (no need to show all categories)
-       - Display the image 'family.png', a portrait of this family depicting their lifestyle, and talk about it.
 
     2. **Spending Analysis**
        - Do an analysis of the spending data in the summary, carefully looking for trends or events.
@@ -979,15 +978,12 @@ def build_reports(data):
        - Based on current spending trends, provide projections for annual costs. Consider factors such as potential inflation, lifestyle changes, or other likely cost changes.
        
     4. **Suggested Budget by Category**
-       - Propose a more concise annual and weekly budget, consolidated to five spending categories.
+       - Propose a more concise annual budget, consolidated to five spending categories.
        - Include a table with totals at the bottom row
 
     6. **Sustainability Outline**
        - Provide an assessment of the income needed to sustain the suggested budget, including pre- and post-tax amounts, stating the assumed tax rates.
     
-    7. **Investment support**   
-        - Explain how investments could help. Outline how much we would need to invest in medium-risk securities in order to reduce the needed income by 50%.
-
     End the report with a footer containing a thumbnail of your image 'BlameBot_small.png' 
     that links to https://blamebot.com/ when clicked. To the right of the thumbnail, put a pearl of self wisdom about family finance in your signature self depricating dry-humor style.
 
