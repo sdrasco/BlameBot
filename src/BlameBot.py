@@ -846,56 +846,61 @@ def shame_cloud(classifier_data, exclude_category=None, output_file=None):
     # close the word cloud
     plt.close()
 
-    # Sort category_dict by amount and take the top categories
-    top_categories = [category for category, amount in sorted(category_dict.items(), key=lambda x: x[1], reverse=True)[0:5]]
+    # # Sort category_dict by amount and take the top categories
+    # top_categories = [category for category, amount in sorted(category_dict.items(), key=lambda x: x[1], reverse=True)[0:5]]
     
-    # Convert the top categories into a readable summary format
-    spending_habits = ", ".join(top_categories)
+    # # Convert the top categories into a readable summary format
+    # spending_habits = ", ".join(top_categories)
 
-    # describe the family doing the spending
-    family_description = "an american husband (tech guy) and wife (professor) who emigrated to scotland. They have two cats (one brown, one grey-tuxedo)."
+    # # describe the family doing the spending
+    # family_description = (
+    #     "The husband is a nerdy white man with poor fashion sense and an average build."
+    #     "The wife is a mixed white and asian woman with impecable taste and an atheletic build."
+    #     "A brown cat with black stripes. A grey tuxedo cat."
+    # )
 
-    # Combine the family description and spending categories into the prompt
-    prompt = f"A comical cartoon image depicting {family_description} The image should reflect a lifestyle in which they spend all their money on {spending_habits}. **no words**"
+    # # Combine the family description and spending categories into the prompt
+    # prompt = (
+    #     f"An image depicting {family_description} "
+    #     f"The image should reflect a lifestyle in which they spend all their money on {spending_habits}. "
+    #     "Focus on visual storytelling without the use of any text, letters, signs, or writing of any kind."
+    # )
     
-    # Ask GPT-4 to refine the prompt for DALL-E 3
-    client = OpenAI()
-    response = client.chat.completions.create(
-        model="gpt-4o",  
-        messages=[
-            {"role": "system", "content": "You are an expert at creating prompts for DALL-E 3 image generation."},
-            {"role": "user", "content": f"Refine this prompt for DALL-E 3: {prompt}"}
-        ]
-    )
+    # # Ask GPT-4 to refine the prompt for DALL-E 3
+    # client = OpenAI()
+    # response = client.chat.completions.create(
+    #     model="gpt-4o-mini",  
+    #     messages=[
+    #         {"role": "system", "content": "You are an expert at creating prompts for DALL-E 3 image generation."},
+    #         {"role": "user", "content": f"Refine this prompt for DALL-E 3: {prompt}"}
+    #     ]
+    # )
 
-    # Extract the clarified prompt
-    clarified_prompt = response.choices[0].message.content
+    # # Extract the clarified prompt
+    # clarified_prompt = response.choices[0].message.content
+    # print(clarified_prompt)
     
-    # Call the OpenAI DALL-E-3API
-    response = client.images.generate(
-        model="dall-e-3",
-        prompt=clarified_prompt,
-        n=1,
-        size="1024x1024",
-        quality="standard",
-        response_format="url"
-    )
+    # # Call the OpenAI DALL-E-3API
+    # response = client.images.generate(
+    #     model="dall-e-3",
+    #     prompt=clarified_prompt,
+    #     n=1,
+    #     size="1792x1024",
+    #     style="vivid",
+    #     quality="standard",
+    #     response_format="url"
+    # )
 
-    # Save the image
-    image_url = response.data[0].url
+    # # Save the image
+    # image_url = response.data[0].url
 
-    # If using a base64 response:
-    # import base64
-    # with open("family.png", "wb") as image_file:
-    #     image_file.write(base64.b64decode(response['data'][0]['b64_json']))
-        
-    # If using a URL:
-    import requests
-    img_data = requests.get(image_url).content
-    with open('family.png', 'wb') as handler:
-        handler.write(img_data)
+    # # If using a URL:
+    # import requests
+    # img_data = requests.get(image_url).content
+    # with open('family.png', 'wb') as handler:
+    #     handler.write(img_data)
 
-    print("Image saved as family.png")
+    # print("Image saved as family.png")
 
 def build_reports(data):
 
@@ -981,7 +986,7 @@ def build_reports(data):
        - Provide an assessment of the income needed to sustain the suggested budget, including pre- and post-tax amounts, stating the assumed tax rates.
     
     7. **Investment support**   
-        - Explain how investments could help. Say what amount invested in medium risk securities would reduce the income needed by half.
+        - Explain how investments could help. Outline how much we would need to invest in medium-risk securities in order to reduce the needed income by 50%.
 
     End the report with a footer containing a thumbnail of your image 'BlameBot_small.png' 
     that links to https://blamebot.com/ when clicked. To the right of the thumbnail, put a pearl of self wisdom about family finance in your signature self depricating dry-humor style.
@@ -1007,9 +1012,9 @@ def build_reports(data):
     # Generate rough report using OpenAI's API
     client = OpenAI()
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "You are BlameBot a clever wealth manager who likes to show off their dry wit."},
+            {"role": "system", "content": "You are BlameBot a clever and humorous wealth manager who likes to show off their dry wit."},
             {"role": "user", "content": prompt}
         ],
     )
