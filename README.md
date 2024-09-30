@@ -34,23 +34,25 @@ To run BlameBot, you will need:
 
 Before running the Python code, ensure you have the following dependencies installed.
 
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/BlameBot.git
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd BlameBot
+   ```
+3. Install the required Python packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+BlameBot's financial reports will be colorful html files.  If you want to export them directly to pdf, you'll need the following:
+
 1. System Dependency (macOS):
     ```
     brew install wkhtmltopdf
     ```
-    
-2. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/BlameBot.git
-   ```
-3. Navigate to the project directory:
-   ```bash
-   cd BlameBot
-   ```
-4. Install the required Python packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
    
 ### Setup
 
