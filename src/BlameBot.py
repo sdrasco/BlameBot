@@ -4,7 +4,6 @@ import os
 import re
 import ast
 import json
-import openai
 import hdbscan
 import base64
 import pdfkit
@@ -12,6 +11,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import yfinance as yf
+from openai import OpenAI
 from bs4 import BeautifulSoup
 from glob import glob
 from gensim.models import FastText
@@ -536,7 +536,6 @@ class AmazonProcessor:
 class AIClassifier:
     def __init__(self, data):
         self.data = data
-        self.api_key = os.getenv("OPENAI_API_KEY")
         
         # Sort the data to ensure consistent order
         self.data = self.data.sort_values(by=['Description']).reset_index(drop=True)
@@ -699,9 +698,8 @@ class AIClassifier:
         Returns:
         - budget_categories (dict): A dictionary of improved budget category names.
         """
-        openai.api_key = os.getenv("OPENAI_API_KEY")
-        
-        # Define the prompt to clarify category names
+                
+        # Define the prompt to clarify category names.  Will send this to OpenAI API.
         prompt = (
             "You are a financial expert tasked with refining budget category names for different clusters of transactions. "
             "The following are descriptions of the transaction clusters:\n\n"
@@ -719,11 +717,17 @@ class AIClassifier:
             "Provide only the dictionary in the output, without any additional text."
         )
 
-        # Call the OpenAI API 
-        response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
-
+        # Call the OpenAI API and show usage
+        client = OpenAI()
+        response = client.chat.completions.create(
+                model='gpt-4',
+                messages=[
+                        {"role": "user", "content": prompt}
+                ]
+            )
+        
         # Extract the response content
-        response_text = response.choices[0].message['content']
+        response_text = response.choices[0].message.content
 
         # Use regex to extract the dictionary from the response
         match = re.search(r'{.*?}', response_text, re.DOTALL)
@@ -842,8 +846,6 @@ def shame_cloud(classifier_data, exclude_category=None, output_file=None):
     # close the word cloud
     plt.close()
 
-    openai.api_key = os.getenv("OPENAI_API_KEY")
-
     # Sort category_dict by amount and take the top categories
     top_categories = [category for category, amount in sorted(category_dict.items(), key=lambda x: x[1], reverse=True)[0:5]]
     
@@ -857,8 +859,9 @@ def shame_cloud(classifier_data, exclude_category=None, output_file=None):
     prompt = f"A comical cartoon image depicting {family_description} The image should reflect a lifestyle in which they spend all their money on {spending_habits}. **no words**"
     
     # Ask GPT-4 to refine the prompt for DALL-E 3
-    response = openai.ChatCompletion.create(
-        model="gpt-4o-mini",  
+    client = OpenAI()
+    response = client.chat.completions.create(
+        model="gpt-4o",  
         messages=[
             {"role": "system", "content": "You are an expert at creating prompts for DALL-E 3 image generation."},
             {"role": "user", "content": f"Refine this prompt for DALL-E 3: {prompt}"}
@@ -866,20 +869,20 @@ def shame_cloud(classifier_data, exclude_category=None, output_file=None):
     )
 
     # Extract the clarified prompt
-    clarified_prompt = response['choices'][0]['message']['content']
+    clarified_prompt = response.choices[0].message.content
     
     # Call the OpenAI DALL-E-3API
-    response = openai.Image.create(
+    response = client.images.generate(
         model="dall-e-3",
         prompt=clarified_prompt,
         n=1,
         size="1024x1024",
-        quality="hd",
-        response_format="url"  # Could also be "b64_json" if you want the image data directly
+        quality="standard",
+        response_format="url"
     )
 
     # Save the image
-    image_url = response['data'][0]['url']
+    image_url = response.data[0].url
 
     # If using a base64 response:
     # import base64
@@ -948,9 +951,7 @@ def build_reports(data):
     }
 
     prompt = f"""
-    You are BlameBot a clever wealth manager assembling a report for my family. You also quite funny, so do show off your dry witt in the report.
-    
-    Structure the report as follows:
+    Assemble a financial report for my family. Show off your dry witt in the report. Structure your report as follows:
 
     1. **Summary**
        - Describe the nature of this report
@@ -978,7 +979,9 @@ def build_reports(data):
 
     6. **Sustainability Outline**
        - Provide an assessment of the income needed to sustain the suggested budget, including pre- and post-tax amounts, stating the assumed tax rates.
-       - Include a second sustainability assessment assuming a combination of employment income and investment income from approximately $2,000,000 USD invested in securities with medium risk. 
+    
+    7. **Investment support**   
+        - Explain how investments could help. Say what amount invested in medium risk securities would reduce the income needed by half.
 
     End the report with a footer containing a thumbnail of your image 'BlameBot_small.png' 
     that links to https://blamebot.com/ when clicked. To the right of the thumbnail, put a pearl of self wisdom about family finance in your signature self depricating dry-humor style.
@@ -993,7 +996,7 @@ def build_reports(data):
     ### HTML Output Requirements:
     - Provide the HTML code **without any markdown or code block formatting** (e.g., no ```html or ``` around the code).
     - Use appropriate HTML5 elements (`<section>`, `<header>`, `<table>`, etc.) to structure the document.
-    - Use mathjax for any equations
+    - Use mathjax for equations
     - Include basic inline CSS for layout and typography
     - The images should be referenced with `<img>` tags
     - All text should be wrapped in `<p>`, `<h1>`, `<h2>`, or `<div>` tags, ensuring proper hierarchy
@@ -1002,21 +1005,36 @@ def build_reports(data):
     """
 
     # Generate rough report using OpenAI's API
-    response = openai.ChatCompletion.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.7
+    client = OpenAI()
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": "You are BlameBot a clever wealth manager who likes to show off their dry wit."},
+            {"role": "user", "content": prompt}
+        ],
     )
 
     # Extract the generated HTML code for parseing/polishing
-    rough_report = response.choices[0].message['content'].strip()
+    rough_report = response.choices[0].message.content
 
     # Parse the HTML with BeautifulSoup
     soup = BeautifulSoup(rough_report, 'html.parser')
 
+    # Make sure soup object has a valid <head> element
+    if soup.head is None:
+        # Create a <head> tag if it doesn't exist
+        soup.head = soup.new_tag('head')
+        soup.insert(0, soup.head)  # Insert <head> at the beginning of the document
+
     # Add the Google Fonts link to the <head> section
     font_link_tag = soup.new_tag('link', href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600&display=swap", rel="stylesheet")
     soup.head.append(font_link_tag)
+
+    # Add the MathJax script to the <head> section
+    mathjax_script_tag = soup.new_tag('script', src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js")
+    mathjax_script_tag.attrs['type'] = "text/javascript"
+    mathjax_script_tag.attrs['async'] = True
+    soup.head.append(mathjax_script_tag)
 
     # Add the font-family style to the <body> tag
     if 'style' in soup.body.attrs:
@@ -1035,7 +1053,7 @@ def build_reports(data):
     image_map = {
         'monthly_sums.png': convert_image_to_base64('monthly_sums.png'),
         'shame_cloud.png': convert_image_to_base64('shame_cloud.png'),
-        'BlameBot.png': convert_image_to_base64('BlameBot_small.png')
+        'BlameBot_small.png': convert_image_to_base64('BlameBot_small.png')
     }
 
     # process all image content
@@ -1077,7 +1095,7 @@ def build_reports(data):
         file.write(str(soup))
     print("Redacted report written to 'financial_report_redacted.html'.")
 
-    # # Convert the HTML files to PDF if desired
+    # # Convert the HTML files to PDF if desired (these aren't so pretty, consider ditching)
     # html_files = [
     #     ('financial_report.html', 'financial_report.pdf'),
     #     ('financial_report_redacted.html', 'financial_report_redacted.pdf')
