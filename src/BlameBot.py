@@ -19,7 +19,39 @@ from sklearn.cluster import KMeans, DBSCAN
 from sklearn.preprocessing import StandardScaler, normalize, MinMaxScaler
 from wordcloud import WordCloud
 from datetime import datetime, timedelta
-SEED = 846 # random seed
+
+# a wrapper to the open ai api calls to help with tracking total usage and costs
+class OpenAIUsageTracker:
+    def __init__(self, client):
+        self.client = client  # OpenAI client instance
+        self.total_prompt_tokens = 0
+        self.total_completion_tokens = 0
+        self.total_images_generated = 0
+
+    def chat_completion(self, **kwargs):
+        response = self.client.chat.completions.create(**kwargs)
+        usage = response.usage
+        self.total_prompt_tokens += usage.prompt_tokens
+        self.total_completion_tokens += usage.completion_tokens
+        return response
+
+    def image_create(self, **kwargs):
+        response = self.client.images.generate(**kwargs)
+        images_generated = len(response.data)
+        self.total_images_generated += images_generated
+        return response
+
+    def calculate_total_cost(self):
+        cost_per_input_token = 5.00 / 1_000_000    # $ per input token
+        cost_per_output_token = 15.00 / 1_000_000  # $ per output token
+        cost_per_image = 0.040                     # $ per image
+
+        total_input_cost = self.total_prompt_tokens * cost_per_input_token
+        total_output_cost = self.total_completion_tokens * cost_per_output_token
+        total_image_cost = self.total_images_generated * cost_per_image
+        total_cost = total_input_cost + total_output_cost + total_image_cost
+
+        print(f"Total OpenAI API usage cost: ${total_cost:.4f}\n")
 
 class AccountProcessor:
     def __init__(self, data_directory):
@@ -701,7 +733,6 @@ class AIClassifier:
                 
         # Define the prompt to clarify category names.  Will send this to OpenAI API.
         prompt = (
-            "You are a financial expert tasked with refining budget category names for different clusters of transactions. "
             "The following are descriptions of the transaction clusters:\n\n"
             f"{crude_names}\n\n"
             "Your job is to generate concise, intuitive, and meaningful category names for each cluster. "
@@ -717,11 +748,11 @@ class AIClassifier:
             "Provide only the dictionary in the output, without any additional text."
         )
 
-        # Call the OpenAI API and show usage
-        client = OpenAI()
-        response = client.chat.completions.create(
-                model='gpt-4',
+        # Call the OpenAI API 
+        response = openapi_usage_tracker.chat_completion(
+                model="gpt-4o",
                 messages=[
+                        {"role": "system", "content": "You are a financial expert tasked with refining budget category names for different clusters of transactions. "},
                         {"role": "user", "content": prompt}
                 ]
             )
@@ -868,8 +899,8 @@ def shame_cloud(classifier_data, exclude_category=None, output_file=None):
     
     # # Ask GPT-4 to refine the prompt for DALL-E 3
     # client = OpenAI()
-    # response = client.chat.completions.create(
-    #     model="gpt-4o-mini",  
+    # response = openapi_usage_tracker.chat_completion(
+    #     model="gpt-4o",  
     #     messages=[
     #         {"role": "system", "content": "You are an expert at creating prompts for DALL-E 3 image generation."},
     #         {"role": "user", "content": f"Refine this prompt for DALL-E 3: {prompt}"}
@@ -881,7 +912,7 @@ def shame_cloud(classifier_data, exclude_category=None, output_file=None):
     # print(clarified_prompt)
     
     # # Call the OpenAI DALL-E-3API
-    # response = client.images.generate(
+    # response = openapi_usage_tracker.image_create(
     #     model="dall-e-3",
     #     prompt=clarified_prompt,
     #     n=1,
@@ -997,7 +1028,7 @@ def build_reports(data):
     ### HTML Output Requirements:
     - Provide the HTML code **without any markdown or code block formatting** (e.g., no ```html or ``` around the code).
     - Use appropriate HTML5 elements (`<section>`, `<header>`, `<table>`, etc.) to structure the document.
-    - Use mathjax for equations
+    - You should avoid the use of equations if at all possible, but if you must use equations, make them with mathjax
     - Include basic inline CSS for layout and typography
     - The images should be referenced with `<img>` tags
     - All text should be wrapped in `<p>`, `<h1>`, `<h2>`, or `<div>` tags, ensuring proper hierarchy
@@ -1006,9 +1037,8 @@ def build_reports(data):
     """
 
     # Generate rough report using OpenAI's API
-    client = OpenAI()
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
+    response = openapi_usage_tracker.chat_completion(
+        model="gpt-4o",
         messages=[
             {"role": "system", "content": "You are BlameBot a clever and humorous wealth manager who likes to show off their dry wit."},
             {"role": "user", "content": prompt}
@@ -1021,11 +1051,11 @@ def build_reports(data):
     # Parse the HTML with BeautifulSoup
     soup = BeautifulSoup(rough_report, 'html.parser')
 
-    # Make sure soup object has a valid <head> element
-    if soup.head is None:
-        # Create a <head> tag if it doesn't exist
-        soup.head = soup.new_tag('head')
-        soup.insert(0, soup.head)  # Insert <head> at the beginning of the document
+    # Occasionaly the html output is garbled and we can't parse it.  
+    # If so, bail out with apology of sorts.
+    if not soup.contents or soup.contents == ['\n']:
+        print("BlameBot failed to write a report this time. Please doc its pay accordingly. Bad BlameBot.")
+        return
 
     # Add the Google Fonts link to the <head> section
     font_link_tag = soup.new_tag('link', href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600&display=swap", rel="stylesheet")
@@ -1081,7 +1111,7 @@ def build_reports(data):
     # Write the soup object to an .html file
     with open('financial_report.html', 'w') as file:
         file.write(str(soup))  
-    print("Report written to 'financial_report.html'.")
+    print("Report written to 'financial_report.html'.\n")
 
     # Redact dollar amounts
     for td in soup.find_all("td"):
@@ -1094,7 +1124,7 @@ def build_reports(data):
     output_path = "financial_report_redacted.html"
     with open(output_path, "w") as file:
         file.write(str(soup))
-    print("Redacted report written to 'financial_report_redacted.html'.")
+    print("Redacted report written to 'financial_report_redacted.html'.\n")
 
     # # Convert the HTML files to PDF if desired (these aren't so pretty, consider ditching)
     # html_files = [
@@ -1111,6 +1141,13 @@ def build_reports(data):
 # Done with classes and methods. Main execution script begins here. #
 #                                                                   #
 #####################################################################
+
+# set a random seed for general reproducability / debugging purposes
+SEED = 846 
+
+# intialize the openai api and our simple usage tracker
+client = OpenAI()
+openapi_usage_tracker = OpenAIUsageTracker(client)
 
 # Set the statement directories
 us_cc_directory = '../data/us_credit_card_statements/'
@@ -1162,4 +1199,5 @@ print(f"\n{category_sums}\n")
 # make the reports
 build_reports(classified.data)
 
-
+# show the total OpenAPI usage cost
+openapi_usage_tracker.calculate_total_cost()
