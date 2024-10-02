@@ -916,7 +916,7 @@ def shame_cloud(classifier_data, exclude_category=None, output_file=None):
     #     model="dall-e-3",
     #     prompt=clarified_prompt,
     #     n=1,
-    #     size="1792x1024",
+    #     size="1024x1024",
     #     style="vivid",
     #     quality="standard",
     #     response_format="url"
