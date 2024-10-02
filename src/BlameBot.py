@@ -1146,6 +1146,7 @@ def build_reports(data):
 SEED = 846 
 
 # intialize the openai api and our simple usage tracker
+# this works fine, but it shouldn't be global
 client = OpenAI()
 openapi_usage_tracker = OpenAIUsageTracker(client)
 
