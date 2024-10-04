@@ -1,5 +1,5 @@
 
-# BlameBot: AI Overlord Family Finance Tool Because You Can't Math and Need More Reasons to Argue
+# [BlameBot](https://blamebot.com): AI Overlord Family Finance Tool Because You Can't Math and Need More Reasons to Argue
 
 <div align="center">
   <img src="BlameBot.png" alt="BlameBot logo" width="300"/>
