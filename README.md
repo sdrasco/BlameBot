@@ -2,7 +2,7 @@
 # [BlameBot](https://blamebot.com): AI Overlord Family Finance Tool Because You Can't Math and Need More Reasons to Argue
 
 <div align="center">
-  <img src="BlameBot.png" alt="BlameBot logo" width="300"/>
+  <img src="../images/BlameBot.png" alt="BlameBot logo" width="300"/>
 </div>
 
 BlameBot is a Python-based tool designed to help families analyze their financial data using advanced AI techniques like ChatGPT, Natural Language Processing (NLP), and clustering. It processes financial statements from various sources, unifies the data, and generates insightful reports to better understand spending habits. And yes, it might just give you more reasons to argue.
@@ -18,7 +18,7 @@ BlameBot is a Python-based tool designed to help families analyze their financia
 ## Project Structure
 
 - `src/BlameBot.py`: The main Python script containing all the code for data processing, clustering, and report generation.
-- `BlameBot.png`: The project logo featuring our mischievous AI overlord mascot.
+- `../images/BlameBot.png`: The project logo featuring our mischievous AI overlord mascot.
 
 ## Getting Started
 
@@ -47,13 +47,6 @@ Before running the Python code, ensure you have the following dependencies insta
    pip install -r requirements.txt
    ```
 
-BlameBot's financial reports will be colorful html files.  If you want to export them directly to pdf, you'll need the following:
-
-1. System Dependency (macOS):
-    ```
-    brew install wkhtmltopdf
-    ```
-   
 ### Setup
 
 1. **Prepare Your Data:**
@@ -104,36 +97,36 @@ To adapt BlameBot to your specific needs, you might consider the following custo
 
 ### Word Cloud
 <div align="center">
-  <img src="ShameCloud.png" alt="Spending Categories Word Cloud of Shame" width="600"/>
+  <img src="../images/ShameCloud.png" alt="Spending Categories Word Cloud of Shame" width="600"/>
 </div>
 
 ### Monthly Expenditures
 
 <div align="center">
-  <img src="monthly.png" alt="Monthly Expenditures Bar Chart (redacted)" width="600"/>
+  <img src="../images/monthly.png" alt="Monthly Expenditures Bar Chart (redacted)" width="600"/>
 </div>
 
 ### Reports
 
-The good news and the bad (in html and PDF, with and without redacting in case you want to hide your shame while going viral).
-Reports minimialist and colorful. The PDF files are so colorful they'll blow your printing budget.  Here are examples, redacted to protect the guilty:
+The good news and the bad (in html, with and without redacting in case you want to hide your shame while going viral).
+Reports are minimialist and colorful. Here are examples, redacted to protect the guilty:
 
-   - [Example Report](https://blamebot.com/example1.html)
-   - [Another Example](https://blamebot.com/example2.html)
-   - [Okay, but this is the last one](https://blamebot.com/example3.html)
+   - [Example Report](https://blamebot.com/html/example1.html)
+   - [Another Example](https://blamebot.com/html/example2.html)
+   - [Okay, but this is the last one](https://blamebot.com/html/example3.html)
 
 ### Words of wisdom
 
 Each report ends with a pearl of wisdom inspired by your spending habits. Examples:
 
 <div align="center">
-  <img src="SignOff1.png" alt="Wisdom 1" width="500"/>
+  <img src="../images/SignOff1.png" alt="Wisdom 1" width="500"/>
 </div>
 <div align="center">
-  <img src="SignOff2.png" alt="Wisdom 2" width="500"/>
+  <img src="../images/SignOff2.png" alt="Wisdom 2" width="500"/>
 </div>
 <div align="center">
-  <img src="SignOff3.png" alt="Wisdom 3" width="500"/>
+  <img src="../images/SignOff3.png" alt="Wisdom 3" width="500"/>
 </div>
 
 ## Fun FAQs

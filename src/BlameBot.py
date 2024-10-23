@@ -928,10 +928,10 @@ def shame_cloud(classifier_data, exclude_category=None, output_file=None):
     # # If using a URL:
     # import requests
     # img_data = requests.get(image_url).content
-    # with open('family.png', 'wb') as handler:
+    # with open('../images/family.png', 'wb') as handler:
     #     handler.write(img_data)
 
-    # print("Image saved as family.png")
+    # print("Image saved as ../images/family.png")
 
 def build_reports(data):
 
@@ -957,7 +957,7 @@ def build_reports(data):
     plt.yticks([])  # This removes the tick labels
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.savefig('monthly_sums.png', dpi=150, bbox_inches='tight')
+    plt.savefig('../images/monthly_sums.png', dpi=150, bbox_inches='tight')
     # Close the figure to avoid displaying it
     plt.close()
 
@@ -1000,9 +1000,9 @@ def build_reports(data):
 
     2. **Spending Analysis**
        - Do an analysis of the spending data in the summary, carefully looking for trends or events.
-       - Display the image 'shame_cloud.png', the word cloud of shame built out of the spending category names and amounts, and talk about it
+       - Display the image '../images/shame_cloud.png', the word cloud of shame built out of the spending category names and amounts, and talk about it
        - Describe the findings of your analysis.
-       - Display the image 'monthly_sums.png', a bar chart of amounts spent each month, and talk about it
+       - Display the image '../images/monthly_sums.png', a bar chart of amounts spent each month, and talk about it
        - Don't use the image filenames in the text
 
     3. **Projections for Annual Costs**
@@ -1015,7 +1015,7 @@ def build_reports(data):
     6. **Sustainability Outline**
        - Provide an assessment of the income needed to sustain the suggested budget, including pre- and post-tax amounts, stating the assumed tax rates.
     
-    End the report with a footer containing a thumbnail of your image 'BlameBot_small.png' 
+    End the report with a footer containing a thumbnail of your image '../images/BlameBot_small.png' 
     that links to https://blamebot.com/ when clicked. To the right of the thumbnail, put a pearl of self wisdom about family finance in your signature self depricating dry-humor style.
 
     ### Design Guidelines:
@@ -1082,9 +1082,9 @@ def build_reports(data):
 
     # Base64 encoded images
     image_map = {
-        'monthly_sums.png': convert_image_to_base64('monthly_sums.png'),
-        'shame_cloud.png': convert_image_to_base64('shame_cloud.png'),
-        'BlameBot_small.png': convert_image_to_base64('BlameBot_small.png')
+        '../images/monthly_sums.png': convert_image_to_base64('../images/monthly_sums.png'),
+        '../images/shame_cloud.png': convert_image_to_base64('../images/shame_cloud.png'),
+        '../images/BlameBot_small.png': convert_image_to_base64('../images/BlameBot_small.png')
     }
 
     # process all image content
@@ -1109,9 +1109,9 @@ def build_reports(data):
             p_tag['style'] = "text-align: left;"
 
     # Write the soup object to an .html file
-    with open('financial_report.html', 'w') as file:
+    with open('../html/financial_report.html', 'w') as file:
         file.write(str(soup))  
-    print("Report written to 'financial_report.html'.\n")
+    print("Report written to '../html/financial_report.html'.\n")
 
     # Redact dollar amounts
     for td in soup.find_all("td"):
@@ -1121,25 +1121,15 @@ def build_reports(data):
         p.string = re.sub(r"\$\d+(?:,\d{3})*(?:\.\d{2})?", "[redacted]", p.text)
 
     # Save the modified content to a new HTML file
-    output_path = "financial_report_redacted.html"
+    output_path = "../html/financial_report_redacted.html"
     with open(output_path, "w") as file:
         file.write(str(soup))
-    print("Redacted report written to 'financial_report_redacted.html'.\n")
-
-    # # Convert the HTML files to PDF if desired (these aren't so pretty, consider ditching)
-    # html_files = [
-    #     ('financial_report.html', 'financial_report.pdf'),
-    #     ('financial_report_redacted.html', 'financial_report_redacted.pdf')
-    # ]
-    # options = {'enable-local-file-access': ''}
-    # for input_html, output_pdf in html_files:
-    #     pdfkit.from_file(input_html, output_pdf, options=options)
-    #     print(f"PDF version of report written to '{output_pdf}'.")
+    print("Redacted report written to '../html/financial_report_redacted.html'.\n")
 
 #####################################################################
 #                                                                   #
 # Done with classes and methods. Main execution script begins here. #
-#                                                                    #
+#                                                                   #
 #####################################################################
 
 # set a random seed for general reproducability / debugging purposes
@@ -1178,7 +1168,7 @@ cleaned_df = amzn.process()
 classified = AIClassifier(cleaned_df)
 
 # show the shame cloud
-shame_cloud(classified.data,output_file="shame_cloud.png")
+shame_cloud(classified.data,output_file="../images/shame_cloud.png")
 
 classified.data['Category'].value_counts()
 
