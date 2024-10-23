@@ -1139,7 +1139,7 @@ def build_reports(data):
 #####################################################################
 #                                                                   #
 # Done with classes and methods. Main execution script begins here. #
-#                                                                   #
+#                                                                    #
 #####################################################################
 
 # set a random seed for general reproducability / debugging purposes
