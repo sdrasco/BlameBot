@@ -2,7 +2,7 @@
 # [BlameBot](https://blamebot.com): AI Overlord Family Finance Tool Because You Can't Math and Need More Reasons to Argue
 
 <div align="center">
-  <img src="../images/BlameBot.png" alt="BlameBot logo" width="300"/>
+  <img src="images/BlameBot.png" alt="BlameBot logo" width="300"/>
 </div>
 
 BlameBot is a Python-based tool designed to help families analyze their financial data using advanced AI techniques like ChatGPT, Natural Language Processing (NLP), and clustering. It processes financial statements from various sources, unifies the data, and generates insightful reports to better understand spending habits. And yes, it might just give you more reasons to argue.
@@ -19,6 +19,7 @@ BlameBot is a Python-based tool designed to help families analyze their financia
 
 The project is organized as follows:
 
+```
 blamebot/
 ├── data/
 ├── images/
@@ -35,6 +36,7 @@ blamebot/
 │   └── visualization.py
 ├── requirements.txt
 └── README.md
+```
 
    * `data/`
    Contains all input data files, such as bank statements and transaction records. Place your CSV files and any other data the application needs to process in this directory.
@@ -145,13 +147,13 @@ Then set parameters in the `apply_clustering` method accordingly:
 
 ### Word Cloud
 <div align="center">
-  <img src="../images/ShameCloud.png" alt="Spending Categories Word Cloud of Shame" width="600"/>
+  <img src="images/ShameCloud.png" alt="Spending Categories Word Cloud of Shame" width="600"/>
 </div>
 
 ### Monthly Expenditures
 
 <div align="center">
-  <img src="../images/monthly.png" alt="Monthly Expenditures Bar Chart (redacted)" width="600"/>
+  <img src="images/monthly.png" alt="Monthly Expenditures Bar Chart (redacted)" width="600"/>
 </div>
 
 ### Reports
@@ -168,13 +170,13 @@ Reports are minimialist and colorful. Here are examples, redacted to protect the
 Each report ends with a pearl of wisdom inspired by your spending habits. Examples:
 
 <div align="center">
-  <img src="../images/SignOff1.png" alt="Wisdom 1" width="500"/>
+  <img src="images/SignOff1.png" alt="Wisdom 1" width="500"/>
 </div>
 <div align="center">
-  <img src="../images/SignOff2.png" alt="Wisdom 2" width="500"/>
+  <img src="images/SignOff2.png" alt="Wisdom 2" width="500"/>
 </div>
 <div align="center">
-  <img src="../images/SignOff3.png" alt="Wisdom 3" width="500"/>
+  <img src="images/SignOff3.png" alt="Wisdom 3" width="500"/>
 </div>
 
 ## Fun FAQs
