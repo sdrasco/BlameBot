@@ -6,3 +6,6 @@ __pycache__/
 
 # Ignore personal data files
 data/
+
+# Ignore unredacted report files
+html/financial_report.html
