@@ -20,7 +20,7 @@ BlameBot is a Python-based tool designed to help families analyze their financia
 The project is organized as follows:
 
 ```
-blamebot/
+BlameBot/
 ├── data/
 ├── images/
 ├── html/
