@@ -131,35 +131,34 @@ class AIClassifier:
         )
 
     def apply_clustering(self, model="HDBSCAN"):
-    """
-    Applies clustering to the combined features based on the chosen model.
-    
-    Parameters:
-    model (str): The clustering model to apply. Options are "HDBSCAN", "DBSCAN", "KMEANS".
-                 Default is "HDBSCAN".
-    """
+        """
+        Applies clustering to the combined features based on the chosen model.
+        
+        Parameters:
+        model (str): The clustering model to apply. Options are "HDBSCAN", "DBSCAN", "KMEANS".
+                     Default is "HDBSCAN".
+        """
 
-    if model == "HDBSCAN":
-        # Apply HDBSCAN Clustering
-        clusterer = hdbscan.HDBSCAN(min_cluster_size=15, min_samples=5)
-        cluster_labels = clusterer.fit_predict(self.combined_features)
+        if model == "HDBSCAN":
+            # Apply HDBSCAN Clustering
+            clusterer = hdbscan.HDBSCAN(min_cluster_size=15, min_samples=5)
+            cluster_labels = clusterer.fit_predict(self.combined_features)
 
-    elif model == "DBSCAN":
-        # Apply DBSCAN Clustering
-        clusterer = DBSCAN(eps=0.045, min_samples=3)
-        cluster_labels = clusterer.fit_predict(self.combined_features)
+        elif model == "DBSCAN":
+            # Apply DBSCAN Clustering
+            clusterer = DBSCAN(eps=0.045, min_samples=3)
+            cluster_labels = clusterer.fit_predict(self.combined_features)
 
-    elif model == "KMEANS":
-        # Apply KMEANS Clustering
-        SEED = 42  # Should get this from elsewhere
-        clusterer = KMeans(n_clusters=30, n_init='auto', random_state=SEED)
-        cluster_labels = clusterer.fit_predict(self.combined_features)
+        elif model == "KMEANS":
+            # Apply KMEANS Clustering
+            SEED = 42  # Should get this from elsewhere
+            clusterer = KMeans(n_clusters=30, n_init='auto', random_state=SEED)
+            cluster_labels = clusterer.fit_predict(self.combined_features)
 
-    else:
-        raise ValueError(f"Invalid model '{model}' chosen. Please choose from 'HDBSCAN', 'DBSCAN', or 'KMEANS'.")
+        else:
+            raise ValueError(f"Invalid model '{model}' chosen. Please choose from 'HDBSCAN', 'DBSCAN', or 'KMEANS'.")
 
-    self.data['Cluster_Label'] = cluster_labels
-
+        self.data['Cluster_Label'] = cluster_labels
 
     def post_clustering_rules(self):
         """
@@ -211,12 +210,12 @@ class AIClassifier:
 
         # Call the OpenAI API
         response = self.openai_tracker.chat_completion(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a financial expert tasked with refining budget category names for different clusters of transactions."},
-                {"role": "user", "content": prompt}
-            ]
-        )
+                model="gpt-4o",
+                messages=[
+                        {"role": "system", "content": "You are a financial expert tasked with refining budget category names for different clusters of transactions. "},
+                        {"role": "user", "content": prompt}
+                ]
+            )
 
         # Extract the response content
         response_text = response.choices[0].message.content

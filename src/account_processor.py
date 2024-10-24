@@ -2,9 +2,11 @@
 
 import os
 import pandas as pd
+import numpy as np  # Add this line
 from glob import glob
 from datetime import datetime
 from currency_converter import GBPtoUSD
+from sklearn.preprocessing import StandardScaler 
 
 class AccountProcessor:
     def __init__(self, data_directory):

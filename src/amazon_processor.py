@@ -2,8 +2,12 @@
 
 import os
 import pandas as pd
+import numpy as np
 from glob import glob
-from datetime import timedelta
+from datetime import datetime, timedelta
+from currency_converter import GBPtoUSD 
+from sklearn.preprocessing import StandardScaler 
+
 
 class AmazonProcessor:
     def __init__(self, statements, data_directory):

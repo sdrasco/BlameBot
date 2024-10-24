@@ -1,6 +1,9 @@
 # src/report_generator.py
 
 import pandas as pd
+import matplotlib.pyplot as plt
+import base64
+import re
 from bs4 import BeautifulSoup
 from openai_utils import OpenAIUsageTracker
 
@@ -40,7 +43,7 @@ def build_reports(data, openai_tracker):
     top_categories = data['Category'].value_counts().head(5).index.tolist()
 
     # Group by 'Category' and sum the 'Amount' for each category
-    category_sums = classified.data.groupby('Category')['Amount'].sum()
+    category_sums = data.groupby('Category')['Amount'].sum()
     category_sums = category_sums.sort_values(ascending=False)
 
     # Calculate the number of days covered
@@ -107,7 +110,7 @@ def build_reports(data, openai_tracker):
     """
 
     # Generate rough report using OpenAI's API
-    response = openapi_usage_tracker.chat_completion(
+    response = openai_tracker.chat_completion(
         model="gpt-4o",
         messages=[
             {"role": "system", "content": "You are BlameBot a clever and humorous wealth manager who likes to show off their dry wit."},
