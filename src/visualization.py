@@ -1,7 +1,20 @@
 # src/visualization.py
 
+import logging
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
+
+# Configure basic logging.  show warning or higher for external modules.
+logging.basicConfig(
+    level=logging.WARNING,  
+    format='%(message)s'
+)
+
+# Create a logger for this module
+logger = logging.getLogger(__name__)
+
+# Show info level logger events for this module
+logger.setLevel(logging.INFO)
 
 def shame_cloud(classifier_data, exclude_category=None, output_file=None):
     """

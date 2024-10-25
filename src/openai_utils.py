@@ -1,6 +1,19 @@
 # src/openai_utils.py
 
 import openai
+import logging
+
+# Configure basic logging.  show warning or higher for external modules.
+logging.basicConfig(
+    level=logging.WARNING,  
+    format='%(message)s'
+)
+
+# Create a logger for this module
+logger = logging.getLogger(__name__)
+
+# Show info level logger events for this module
+logger.setLevel(logging.INFO)
 
 class OpenAIUsageTracker:
     def __init__(self, client):
@@ -32,4 +45,4 @@ class OpenAIUsageTracker:
         total_image_cost = self.total_images_generated * cost_per_image
         total_cost = total_input_cost + total_output_cost + total_image_cost
 
-        print(f"Total OpenAI API usage cost: ${total_cost:.4f}\n")
+        logger.info(f"Total OpenAI API usage cost: ${total_cost:.4f}\n")

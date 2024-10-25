@@ -1,5 +1,6 @@
 # src/ai_classifier.py
 
+import logging
 import numpy as np
 import pandas as pd
 import hdbscan
@@ -13,6 +14,18 @@ import ast
 import json
 from datetime import datetime, timedelta
 import os
+
+# Configure basic logging.  show warning or higher for external modules.
+logging.basicConfig(
+    level=logging.WARNING,  
+    format='%(message)s'
+)
+
+# Create a logger for this module
+logger = logging.getLogger(__name__)
+
+# Show info level logger events for this module
+logger.setLevel(logging.INFO)
 
 class AIClassifier:
     def __init__(self, data, openai_tracker, seed=846):
@@ -240,11 +253,11 @@ class AIClassifier:
             # Write categories to file
             with open("clarification.json", 'w') as file:
                 json.dump(clarification_data, file, indent=4)
-                print("\nUpdated category mappings in clarification.json\n")
+                logger.info("\nUpdated category mappings in clarification.json\n")
 
             self.ai_names = ai_names
         else:
-            print("\nFailed to extract budget categories from the response.\n")
+            logger.error("\nFailed to extract budget categories from the response.\n")
             self.ai_names = {}
 
     def use_ai_clarification(self):
@@ -265,11 +278,11 @@ class AIClassifier:
             # Keep old AI_names if new and old crude_names match
             if file_crude_names == self.crude_names:
                 self.ai_names = self.sort_dict(clarification_data.get('AI_names', {}))
-                print("\nUsed budget categories in clarification.json. No need to update.\n")
+                logger.info("\nUsed budget categories in clarification.json. No need to update.\n")
                 use_ai = False
 
         if use_ai:
-            print("Using AI to clarify spending category names.")
+            logger.info("Using AI to clarify spending category names.")
             self.ai_clarification()
 
         # Using the new dictionary, label the transactions

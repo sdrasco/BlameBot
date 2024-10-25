@@ -132,7 +132,7 @@ To adapt BlameBot to your specific needs, you might consider the following custo
 Then set parameters in the `apply_clustering` method accordingly:
   - `self.apply_clustering()`: Uses **HDBSCAN**. Adjust parameters like `min_cluster_size` and `min_samples` to see how it affects clustering.
   - `self.apply_clustering(model="DBSCAN")`: Uses **DBSCAN**. Uncomment and adjust parameters like `eps` and `min_samples`.
-  - `self.apply_clustering(model="KMeans")`: Uses **KMeans**. Set the number of clusters manually to explore various segmentation strategies.
+  - `self.apply_clustering(model="KMEANS")`: Uses **KMeans**. Set the number of clusters manually to explore various segmentation strategies.
 
 ### Improving Cluster Naming
 

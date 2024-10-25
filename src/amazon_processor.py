@@ -1,6 +1,7 @@
 # src/amazon_processor.py
 
 import os
+import logging
 import pandas as pd
 import numpy as np
 from glob import glob
@@ -8,6 +9,17 @@ from datetime import datetime, timedelta
 from currency_converter import GBPtoUSD 
 from sklearn.preprocessing import StandardScaler 
 
+# Configure basic logging.  show warning or higher for external modules.
+logging.basicConfig(
+    level=logging.WARNING,  
+    format='%(message)s'
+)
+
+# Create a logger for this module
+logger = logging.getLogger(__name__)
+
+# Show info level logger events for this module
+logger.setLevel(logging.INFO)
 
 class AmazonProcessor:
     def __init__(self, statements, data_directory):
@@ -197,14 +209,14 @@ class AmazonProcessor:
                     # Append the Amazon orders to the list of rows to add
                     rows_to_add.append(amazon_orders)
                     
-                    #print(f"Match found for Order ID {order_id} on {day}: Statement Index {closest_match_idx} with relative diff {closest_diff:.2f}")
+                    #logger.info(f"Match found for Order ID {order_id} on {day}: Statement Index {closest_match_idx} with relative diff {closest_diff:.2f}")
         
         # Delete the matched statement rows from self.statements
         if indices_to_delete:
             self.statements = self.statements.drop(index=indices_to_delete).reset_index(drop=True)
-            print(f"\nDeciphered {100*len(indices_to_delete)/num_matching_rows:2.0f}% of Amazon transaction descriptions ({len(indices_to_delete)} out of {num_matching_rows}).\n")
+            logger.info(f"\nDeciphered {100*len(indices_to_delete)/num_matching_rows:2.0f}% of Amazon transaction descriptions ({len(indices_to_delete)} out of {num_matching_rows}).\n")
         else:
-            print("No matching amazon transactions.")
+            logger.info("No matching amazon transactions.")
         
         # Concatenate all Amazon orders to add
         if rows_to_add:

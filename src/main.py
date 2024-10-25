@@ -1,6 +1,7 @@
 # src/main.py
 
 import os
+import logging
 import numpy as np
 import pandas as pd
 from account_processor import UKBank, CreditCardUS
@@ -10,6 +11,18 @@ from visualization import shame_cloud
 from report_generator import build_reports
 from openai_utils import OpenAIUsageTracker
 import openai
+
+# Configure basic logging.  show warning or higher for external modules.
+logging.basicConfig(
+    level=logging.WARNING,  
+    format='%(message)s'
+)
+
+# Create a logger for this module
+logger = logging.getLogger(__name__)
+
+# Show info level logger events for this module
+logger.setLevel(logging.INFO)
 
 def main():
     # Set a random seed
@@ -29,13 +42,13 @@ def main():
     # Process the statements
     uscc = CreditCardUS(us_cc_directory)
     clean_uscc = uscc.process(DateCol='Transaction Date', UK_style=False, DescriptionColumnNames=['Description'])
-    print("\nUS credit card summary:\n")
-    print(uscc.summarize())
+    logger.info("\nUS credit card summary:\n")
+    logger.info(uscc.summarize())
 
     ukbank = UKBank(uk_bank_directory)
     clean_ukbank = ukbank.process(DateCol='Date', UK_style=True, DescriptionColumnNames=['Name', 'Description'])
-    print("\nUK bank account summary:\n")
-    print(ukbank.summarize())
+    logger.info("\nUK bank account summary:\n")
+    logger.info(ukbank.summarize())
 
     # Merge the processed statements
     statements = pd.concat([clean_uscc, clean_ukbank], ignore_index=True)
@@ -52,7 +65,7 @@ def main():
     shame_cloud(classifier.data, output_file="../images/shame_cloud.png")
 
     # Build the reports
-    build_reports(classifier.data, openai_tracker)
+    #build_reports(classifier.data, openai_tracker)
 
     # Show the total OpenAI API usage cost
     openai_tracker.calculate_total_cost()

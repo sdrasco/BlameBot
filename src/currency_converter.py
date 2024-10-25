@@ -1,10 +1,22 @@
 # src/currency_converter.py
 
-
 import os
+import logging
 import pandas as pd
 import yfinance as yf
 from datetime import datetime, timedelta
+
+# Configure basic logging.  show warning or higher for external modules.
+logging.basicConfig(
+    level=logging.WARNING,  
+    format='%(message)s'
+)
+
+# Create a logger for this module
+logger = logging.getLogger(__name__)
+
+# Show info level logger events for this module
+logger.setLevel(logging.INFO)
 
 class GBPtoUSD:
     def __init__(self, data_file='gbp_usd_daily_data.csv'):
@@ -31,7 +43,7 @@ class GBPtoUSD:
 
             # If the most recent date in the file is not up to date, download missing data
             if most_recent_date < today:
-                print(f"Exchange rate data is outdated. Most recent date in the file: {most_recent_date}")
+                logger.info(f"Exchange rate data is outdated. Most recent date in the file: {most_recent_date}")
                 # Download missing data starting from the day after the most recent date
                 start_date = most_recent_date + timedelta(days=1)
                 new_data = yf.download('GBPUSD=X', interval='1d', start=start_date, end=today + timedelta(days=1))
@@ -42,15 +54,15 @@ class GBPtoUSD:
                     new_data.index = pd.to_datetime(new_data.index)  # Ensure index is datetime
                     data = pd.concat([data, new_data])
                     data.to_csv(self.data_file, index=True)
-                    print(f"Exchange rate data updated with new entries up to {today}.")
+                    logger.info(f"Exchange rate data updated with new entries up to {today}.")
                 else:
-                    print("No new exchange data available for update.")
+                    logger.warning("No new exchange data available for update.")
         else:
             # If the file does not exist, download the full dataset
             data = yf.download('GBPUSD=X', interval='1d', start='2016-01-01', end=datetime.today().date() + timedelta(days=1))
             data = data[['Close']]  # Keep only the 'Close' column
             data.to_csv(self.data_file, index=True)
-            print(f"Exchange rate data downloaded and saved to '{self.data_file}'.")
+            logger.info(f"Exchange rate data downloaded and saved to '{self.data_file}'.")
         
         return data
 

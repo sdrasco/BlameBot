@@ -1,11 +1,24 @@
 # src/report_generator.py
 
+import logging
 import pandas as pd
 import matplotlib.pyplot as plt
 import base64
 import re
 from bs4 import BeautifulSoup
 from openai_utils import OpenAIUsageTracker
+
+# Configure basic logging.  show warning or higher for external modules.
+logging.basicConfig(
+    level=logging.WARNING,  
+    format='%(message)s'
+)
+
+# Create a logger for this module
+logger = logging.getLogger(__name__)
+
+# Show info level logger events for this module
+logger.setLevel(logging.INFO)
 
 def build_reports(data, openai_tracker):
     # Convert 'Date' column to datetime if it's not already
@@ -127,7 +140,7 @@ def build_reports(data, openai_tracker):
     # Occasionaly the html output is garbled and we can't parse it.  
     # If so, bail out with apology of sorts.
     if not soup.contents or soup.contents == ['\n']:
-        print("BlameBot failed to write a report this time. Please doc its pay accordingly. Bad BlameBot.")
+        logger.error("BlameBot failed to write a report this time. Please doc its pay accordingly. Bad BlameBot.")
         return
 
     # Add the Google Fonts link to the <head> section
@@ -184,7 +197,7 @@ def build_reports(data, openai_tracker):
     # Write the soup object to an .html file
     with open('../html/financial_report.html', 'w') as file:
         file.write(str(soup))  
-    print("Report written to '../html/financial_report.html'.\n")
+    logger.info("Report written to '../html/financial_report.html'.\n")
 
     # Redact dollar amounts
     for td in soup.find_all("td"):
@@ -197,4 +210,4 @@ def build_reports(data, openai_tracker):
     output_path = "../html/financial_report_redacted.html"
     with open(output_path, "w") as file:
         file.write(str(soup))
-    print("Redacted report written to '../html/financial_report_redacted.html'.\n")
+    logger.info("Redacted report written to '../html/financial_report_redacted.html'.\n")

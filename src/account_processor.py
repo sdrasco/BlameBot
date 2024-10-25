@@ -1,12 +1,25 @@
 # src/account_processor.py
 
 import os
+import logging
 import pandas as pd
 import numpy as np  # Add this line
 from glob import glob
 from datetime import datetime
 from currency_converter import GBPtoUSD
 from sklearn.preprocessing import StandardScaler 
+
+# Configure basic logging.  show warning or higher for external modules.
+logging.basicConfig(
+    level=logging.WARNING,  
+    format='%(message)s'
+)
+
+# Create a logger for this module
+logger = logging.getLogger(__name__)
+
+# Show info level logger events for this module
+logger.setLevel(logging.INFO)
 
 class AccountProcessor:
     def __init__(self, data_directory):
@@ -40,7 +53,7 @@ class AccountProcessor:
                 if list(df.columns) == expected_columns:
                     dataframes.append(df)
                 else:
-                    print(f"File {file} has unexpected columns: {df.columns}")
+                    logger.error(f"File {file} has unexpected columns: {df.columns}")
 
         # Concatenate statements
         if dataframes:
