@@ -65,7 +65,7 @@ def main():
     shame_cloud(classifier.data, output_file="../images/shame_cloud.png")
 
     # Build the reports
-    #build_reports(classifier.data, openai_tracker)
+    build_reports(classifier.data, openai_tracker)
 
     # Show the total OpenAI API usage cost
     openai_tracker.calculate_total_cost()

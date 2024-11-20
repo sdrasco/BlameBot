@@ -223,19 +223,19 @@ class AIClassifier:
 
         # Call the OpenAI API
         system_prompt = "You are a financial expert tasked with refining budget category names for different clusters of transactions. "
-        # response = self.openai_tracker.chat_completion(
-        #         model="gpt-4o",
-        #         messages=[
-        #                 {"role": "system", "content": system_prompt},
-        #                 {"role": "user", "content": prompt}
-        #         ]
-        #     )
         response = self.openai_tracker.chat_completion(
-            model="o1-preview",
-            messages=[
-                    {"role": "user", "content": system_prompt + prompt}
-            ]
-        )
+                model="gpt-4o",
+                messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt}
+                ]
+            )
+        # response = self.openai_tracker.chat_completion(
+        #     model="o1-preview",
+        #     messages=[
+        #             {"role": "user", "content": system_prompt + prompt}
+        #     ]
+        # )
 
 
         # Extract the response content

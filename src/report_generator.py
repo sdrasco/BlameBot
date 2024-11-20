@@ -124,19 +124,19 @@ def build_reports(data, openai_tracker):
 
     # Generate rough report using OpenAI's API
     system_prompt = "You are BlameBot a clever and humorous wealth manager who likes to show off their dry wit. "
-    # response = openai_tracker.chat_completion(
-    #     model="gpt-4o",
-    #     messages=[
-    #         {"role": "system", "content": system_prompt},
-    #         {"role": "user", "content": prompt}
-    #     ],
-    # )
     response = openai_tracker.chat_completion(
-        model="o1-preview",
+        model="gpt-4o",
         messages=[
-                {"role": "user", "content": system_prompt + prompt}
-        ]
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ],
     )
+    # response = openai_tracker.chat_completion(
+    #     model="o1-preview",
+    #     messages=[
+    #             {"role": "user", "content": system_prompt + prompt}
+    #     ]
+    # )
 
     # Extract the generated HTML code for parseing/polishing
     rough_report = response.choices[0].message.content
